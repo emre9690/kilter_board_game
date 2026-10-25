@@ -2,7 +2,13 @@
   "name": "kilter-board-game",
   "version": "1.0.0",
   "private": true,
-  "description": "Gap Drop: a falling-bars climbing game for the Kilter Board, played over Web Bluetooth.",
+  "description": "Arcade games for the Kilter Board, played over Web Bluetooth.",
+  "author": "Emre Ozer",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/emre9690/kilter_board_game.git"
+  },
   "type": "module",
   "scripts": {
     "start": "python3 -m http.server 8000 --directory src",
