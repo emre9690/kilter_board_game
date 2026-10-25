@@ -8,7 +8,7 @@ import { COLS, ROWS, gridPosition, holesNearRow, colToX } from './layout.js';
 
 export const DEFAULT_SETTINGS = {
   gapWidth: 5, // holds
-  rowSeconds: 1.5, // starting time per row drop
+  rowSeconds: 1.2, // starting time per row drop
   minRowSeconds: 0.6,
   speedUpEvery: 3, // bars cleared between speed-ups (0 = never)
   speedUpFactor: 0.9,
