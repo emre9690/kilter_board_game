@@ -3,83 +3,71 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#0d0f14">
+  <meta name="theme-color" content="#0b0b0c">
   <title>Gap Drop</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' rx='3' fill='%230d0f14'/><rect x='1' y='4' width='5' height='2' fill='%235b8cff'/><rect x='11' y='4' width='4' height='2' fill='%235b8cff'/><rect x='1' y='10' width='9' height='2' fill='%23a000ff'/><rect x='14' y='10' width='1' height='2' fill='%23a000ff'/></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' rx='3' fill='%230b0b0c'/><rect x='1' y='4' width='5' height='2' fill='%23ff3b30'/><rect x='11' y='4' width='4' height='2' fill='%23ff3b30'/><rect x='1' y='10' width='9' height='2' fill='%23ff3b30'/><rect x='14' y='10' width='1' height='2' fill='%23ff3b30'/></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;800&display=swap">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <header class="top">
-    <h1>Gap Drop</h1>
-    <p class="tagline">Bars fall down the Kilter board. Climb into the gap.</p>
+  <header class="bar">
+    <div class="logo">Gap Drop</div>
+    <div class="conn">
+      <span class="dot" id="status-dot"></span>
+      <span id="status-text">Offline</span>
+      <button id="btn-connect" class="primary">Connect</button>
+      <button id="btn-reconnect" hidden>Reconnect</button>
+      <button id="btn-disconnect" hidden>Disconnect</button>
+    </div>
   </header>
+  <p class="notice" id="status-detail"></p>
+  <p class="notice" id="unsupported" hidden>No Bluetooth in this browser. Use Chrome, or Bluefy on iPhone.</p>
 
   <main>
-    <div class="side">
-    <section class="card connection" id="connection">
-      <div class="status-row">
-        <span class="dot" id="status-dot"></span>
-        <span id="status-text">Not connected</span>
-      </div>
-      <p class="detail" id="status-detail"></p>
-      <p class="warning" id="unsupported" hidden>
-        This browser can't use Bluetooth. Use Chrome on Android, Mac, Windows or ChromeOS.
-        On iPhone, open this page in the free <strong>Bluefy</strong> browser.
-        You can still play on the preview below.
-      </p>
-      <div class="buttons">
-        <button id="btn-connect" class="primary">Connect board</button>
-        <button id="btn-reconnect" hidden>Reconnect</button>
-        <button id="btn-disconnect" hidden>Disconnect</button>
-        <button id="btn-clear" hidden>Clear lights</button>
-      </div>
-      <p class="hint">Close the Kilter app first. The board only accepts one Bluetooth connection at a time.</p>
-    </section>
-
-    <section class="card game" id="game">
-      <div class="scoreboard">
-        <div><span class="label">Score</span><span class="value" id="score">0</span></div>
-        <div><span class="label">Speed</span><span class="value" id="speed">1</span></div>
-        <div><span class="label">Best</span><span class="value" id="best">0</span></div>
-      </div>
-      <div class="modes" id="modes" role="radiogroup" aria-label="Difficulty"></div>
-      <p class="mode-detail" id="mode-detail"></p>
-      <div class="big-message" id="message">Ready</div>
-      <button id="btn-main" class="huge">Start</button>
-      <p class="hint desktop-only">Space bar also starts the run and ends it.</p>
-    </section>
-
-    <details class="card settings" id="settings" name="panel">
-      <summary>Options</summary>
-      <div class="settings-grid">
-        <label class="check"><input type="checkbox" name="sounds"> Beeps</label>
-        <label class="check"><input type="checkbox" name="showAllDevices"> Show all Bluetooth devices</label>
-        <label class="wide">Board protocol
-          <select name="apiLevel">
-            <option value="auto">Auto-detect</option>
-            <option value="3">API v3 (most boards)</option>
-            <option value="2">API v2 (older boards)</option>
-          </select>
-        </label>
-      </div>
-    </details>
-
-    <details class="card howto" name="panel">
-      <summary>How to play</summary>
-      <ol class="rules">
-        <li>Connect the board, then press <strong>Start</strong> and put the phone down.</li>
-        <li>Get on the wall near the bottom while the timer runs. The board counts down <strong>3 – 2 – 1 – GO</strong>.</li>
-        <li>Bars fall from the top. <strong>Lit holds are lava.</strong> When a bar reaches you, every hand and foot has to be on a hold in the gap.</li>
-        <li>Each bar that reaches the bottom is a point. Bars get faster as you go.</li>
-        <li>Pick a mode before you start: <strong>Beginner</strong> has wide gaps and slow bars, <strong>Impossible</strong> has 3-hold gaps and very fast bars. Best scores are kept per mode.</li>
-        <li>Honor system: if you touch a lit hold or come off the wall, press <strong>I'm out</strong>. Your score shows on the board.</li>
-      </ol>
-    </details>
-    </div>
-
-    <section class="card board-card">
+    <section class="board-card">
       <div id="preview" class="preview"></div>
     </section>
+
+    <div class="side">
+      <section class="game" id="game">
+        <div class="score" id="score">0</div>
+        <div class="stats">
+          <span>Best <b id="best">0</b></span>
+          <span>Speed <b id="speed">1</b></span>
+        </div>
+        <div class="message" id="message">Ready</div>
+        <div class="modes" id="modes" role="radiogroup" aria-label="Difficulty"></div>
+        <button id="btn-main" class="huge">Start</button>
+      </section>
+
+      <details class="panel howto" name="panel">
+        <summary>Rules</summary>
+        <ul class="rules">
+          <li>Lit holds are lava.</li>
+          <li>Hands and feet in the gap when a bar passes.</li>
+          <li>Touched one? Hit <b>I'm out</b>.</li>
+          <li>Close the Kilter app before connecting.</li>
+        </ul>
+      </details>
+
+      <details class="panel settings" id="settings" name="panel">
+        <summary>Options</summary>
+        <div class="options">
+          <label><input type="checkbox" name="sounds"> Beeps</label>
+          <label><input type="checkbox" name="showAllDevices"> Show all devices</label>
+          <label>Protocol
+            <select name="apiLevel">
+              <option value="auto">Auto</option>
+              <option value="3">v3</option>
+              <option value="2">v2</option>
+            </select>
+          </label>
+          <button id="btn-clear" hidden>Clear lights</button>
+        </div>
+      </details>
+    </div>
   </main>
 
   <script type="module" src="js/app.js"></script>
