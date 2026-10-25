@@ -2,7 +2,9 @@
 
 Arcade games for the Kilter Board, played on the wall. Your phone talks to the board over Bluetooth and the LEDs become the game.
 
-**Play now: [kiltergame.vercel.app](https://kiltergame.vercel.app)**
+### ▶ Play at **[kiltergame.vercel.app](https://kiltergame.vercel.app)**
+
+Nothing to install. Open the link in Chrome next to the board.
 
 <h3 align="center">Gap Drop</h3>
 <p align="center">
@@ -24,7 +26,7 @@ Both games have **Beginner, Intermediate, Hard and Impossible** modes, plus **Cu
 
 ## Play
 
-1. Open the site in **Chrome or Edge** on Android, Mac, Windows or ChromeOS. On iPhone, use the free **Bluefy** browser, since Safari has no Web Bluetooth.
+1. Open **[kiltergame.vercel.app](https://kiltergame.vercel.app)** in **Chrome or Edge** on Android, Mac, Windows or ChromeOS. On iPhone, use the free **Bluefy** browser, since Safari has no Web Bluetooth.
 2. Close the Kilter app. The board accepts one Bluetooth connection at a time.
 3. Pick your board, tap **Connect**, choose a game and mode, then **Start** and put the phone down.
 
