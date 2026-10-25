@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { COLS, ROWS, HOLES, gridPosition, bitmapPositions } from '../src/js/layout.js';
-import { createGame, tick, renderFrame, barPositions } from '../src/js/game.js';
+import { createGame, tick, renderFrame, barPositions, DEFAULT_SETTINGS } from '../src/js/game.js';
 import { BIG, numberBitmap } from '../src/js/font.js';
 
 const seeded = (seed = 1) => () => {
@@ -18,8 +18,8 @@ test('12x12 with kickboard layout has 476 LEDs and a full 17 x 19 bolt-on grid',
   assert.equal(gridPosition(COLS, 0), undefined);
 });
 
-test('a bar lights every column except the gap', () => {
-  const game = createGame({ gapWidth: 5 }, seeded());
+test('a thin bar lights every column except the gap', () => {
+  const game = createGame({ gapWidth: 5, thickBars: false }, seeded());
   const bar = { row: 3, gapStart: 6 };
   const lit = new Set(barPositions(bar, game.settings));
   assert.equal(lit.size, COLS - 5);
@@ -27,18 +27,33 @@ test('a bar lights every column except the gap', () => {
   assert.ok(lit.has(gridPosition(5, 3)) && lit.has(gridPosition(11, 3)));
 });
 
-test('thick bars add screw-on holds but keep the gap clear', () => {
-  const game = createGame({ gapWidth: 5, thickBars: true }, seeded());
-  const bar = { row: 5, gapStart: 6 };
-  const thin = barPositions(bar, { ...game.settings, thickBars: false });
-  const thick = barPositions(bar, game.settings);
-  assert.ok(thick.length > thin.length);
-  const gapHoles = HOLES.filter((h) => h.x > 48 && h.x < 96).map((h) => h.position);
-  assert.ok(gapHoles.every((p) => !thick.includes(p)));
+test('thick bars are on by default', () => {
+  assert.equal(DEFAULT_SETTINGS.thickBars, true);
 });
 
-test('bars spawn at the top, fall one row per tick and score at the bottom', () => {
-  const game = createGame({ barSpacing: 7, speedUpEvery: 0 }, seeded(7));
+test('thick bars cover two bolt-on rows plus the footholds between, gap kept clear', () => {
+  const game = createGame({ gapWidth: 5, thickBars: true }, seeded());
+  const bar = { row: 5, gapStart: 6 };
+  const thick = new Set(barPositions(bar, game.settings));
+  for (const row of [5, 6]) {
+    for (let c = 0; c < COLS; c++) assert.equal(thick.has(gridPosition(c, row)), c < 6 || c > 10, `col ${c} row ${row}`);
+  }
+  const footholds = HOLES.filter((h) => h.y === 108); // screw-on row between rows 5 (y 112) and 6 (y 104)
+  const outside = footholds.filter((h) => h.x < 48 || h.x > 96);
+  assert.ok(outside.length > 0 && outside.every((h) => thick.has(h.position)));
+  const gapHoles = HOLES.filter((h) => h.x > 48 && h.x < 96).map((h) => h.position);
+  assert.ok(gapHoles.every((p) => !thick.has(p)));
+  assert.ok(HOLES.filter((h) => h.y > 112 || h.y < 104).every((h) => !thick.has(h.position)));
+});
+
+test('a thick bar on the bottom row lights the kickboard footholds', () => {
+  const game = createGame({ thickBars: true }, seeded());
+  const lit = new Set(barPositions({ row: ROWS - 1, gapStart: 0 }, game.settings));
+  assert.ok(HOLES.filter((h) => h.y === 4 && h.x > 48).every((h) => lit.has(h.position)));
+});
+
+test('thin bars spawn at the top, fall one row per tick and score at the bottom', () => {
+  const game = createGame({ barSpacing: 7, speedUpEvery: 0, thickBars: false }, seeded(7));
   tick(game);
   assert.equal(game.bars.length, 1);
   assert.equal(game.bars[0].row, 0);
@@ -50,22 +65,51 @@ test('bars spawn at the top, fall one row per tick and score at the bottom', () 
   assert.equal(game.score, 1);
 });
 
-test('gaps stay on the board and move by at most maxGapShift', () => {
-  const game = createGame({ gapWidth: 5, maxGapShift: 3, barSpacing: 1 }, seeded(42));
+test('each gap jumps at least a gap width and at most maxGapShift', () => {
+  const game = createGame({ gapWidth: 5, maxGapShift: 8, barSpacing: 1 }, seeded(42));
   let prev = null;
   for (let t = 0; t < 500; t++) {
     tick(game);
     const g = game.lastGapStart;
     assert.ok(g >= 0 && g + 5 <= COLS);
     if (prev !== null && game.ticksSinceSpawn === 0) {
-      assert.ok(Math.abs(g - prev) <= 3 && g !== prev);
+      const shift = Math.abs(g - prev);
+      assert.ok(shift >= 5 && shift <= 8, `jumped ${shift}`);
     }
     prev = g;
   }
 });
 
+test('wide gaps still jump at least a gap width when the board allows it', () => {
+  const game = createGame({ gapWidth: 7, maxGapShift: 3, barSpacing: 1 }, seeded(9));
+  let prev = null;
+  for (let t = 0; t < 300; t++) {
+    tick(game);
+    const g = game.lastGapStart;
+    assert.ok(g >= 0 && g + 7 <= COLS);
+    if (prev !== null && game.ticksSinceSpawn === 0) assert.ok(Math.abs(g - prev) >= 5, `jumped ${Math.abs(g - prev)}`);
+    prev = g;
+  }
+});
+
+test('thick bars slide in from above and are spaced one row further apart', () => {
+  const game = createGame({ barSpacing: 7, speedUpEvery: 0, thickBars: true }, seeded(7));
+  tick(game);
+  assert.equal(game.bars[0].row, -1); // only its bottom row is on the board
+  let ticks = 1;
+  while (game.bars.length < 2) {
+    tick(game);
+    ticks++;
+  }
+  assert.equal(game.bars[0].row - game.bars[1].row, 8);
+  do ticks++;
+  while (!tick(game).cleared);
+  // From row -1 the bar needs ROWS + 1 drops until its top row leaves the bottom.
+  assert.equal(ticks, 1 + ROWS + 1);
+});
+
 test('speed increases every N bars down to the minimum', () => {
-  const game = createGame({ rowSeconds: 1, minRowSeconds: 0.8, speedUpEvery: 1, speedUpFactor: 0.5, barSpacing: 1 }, seeded());
+  const game = createGame({ rowSeconds: 1, minRowSeconds: 0.8, speedUpEvery: 1, speedUpFactor: 0.5, barSpacing: 1, thickBars: false }, seeded());
   for (let t = 0; t < ROWS + 3; t++) tick(game);
   assert.ok(game.score >= 2);
   assert.equal(game.rowSeconds, 0.8);

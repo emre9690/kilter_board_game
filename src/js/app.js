@@ -16,7 +16,7 @@ const showOnPreview = createPreview($('preview'));
 
 // ---------- persistence (best effort; private mode may block storage) ----------
 
-const STORE_KEY = 'gapdrop.settings.v2';
+const STORE_KEY = 'gapdrop.settings.v5';
 const BEST_KEY = 'gapdrop.best';
 const load = (key, fallback) => {
   try {
@@ -273,7 +273,7 @@ const FORMAT = {
   gapWidth: (v) => `${v} holds`,
   rowSeconds: (v) => `${Number(v).toFixed(1)} s per row`,
   barSpacing: (v) => `${v} rows`,
-  maxGapShift: (v) => `${v} holds`,
+  maxGapShift: (v) => `${Math.max(v, settings.gapWidth)} holds`,
   getReadySeconds: (v) => (Number(v) === 0 ? 'none' : `${v} s`),
 };
 
@@ -290,6 +290,7 @@ for (const input of form.querySelectorAll('input, select')) {
     else if (input.type === 'range') settings[key] = Number(input.value);
     else settings[key] = input.value;
     if (out) out.textContent = FORMAT[key](input.value);
+    if (key === 'gapWidth') $('out-maxGapShift').textContent = FORMAT.maxGapShift(settings.maxGapShift);
     if (key === 'apiLevel') {
       applyApiLevel();
       renderStatus(connection.status);

@@ -15,7 +15,8 @@
   </header>
 
   <main>
-    <section class="card" id="connection">
+    <div class="side">
+    <section class="card connection" id="connection">
       <div class="status-row">
         <span class="dot" id="status-dot"></span>
         <span id="status-text">Not connected</span>
@@ -43,14 +44,10 @@
       </div>
       <div class="big-message" id="message">Ready</div>
       <button id="btn-main" class="huge">Start</button>
-      <p class="hint">Space bar also starts the run and ends it.</p>
+      <p class="hint desktop-only">Space bar also starts the run and ends it.</p>
     </section>
 
-    <section class="card board-card">
-      <div id="preview" class="preview"></div>
-    </section>
-
-    <details class="card" id="settings">
+    <details class="card settings" id="settings" name="panel">
       <summary>Settings</summary>
       <div class="settings-grid">
         <label>Gap width <output id="out-gapWidth"></output>
@@ -62,17 +59,17 @@
         <label>Rows between bars <output id="out-barSpacing"></output>
           <input type="range" name="barSpacing" min="4" max="12" step="1">
         </label>
-        <label>Gap moves up to <output id="out-maxGapShift"></output>
-          <input type="range" name="maxGapShift" min="1" max="8" step="1">
+        <label>Gap jumps at most <output id="out-maxGapShift"></output>
+          <input type="range" name="maxGapShift" min="3" max="12" step="1">
         </label>
-        <label>Time to get on the wall <output id="out-getReadySeconds"></output>
+        <label>Get-ready time <output id="out-getReadySeconds"></output>
           <input type="range" name="getReadySeconds" min="0" max="15" step="1">
         </label>
         <label class="check"><input type="checkbox" name="speedUp"> Speed up as you score</label>
-        <label class="check"><input type="checkbox" name="thickBars"> Thick bars (also light screw-on holds)</label>
-        <label class="check"><input type="checkbox" name="sounds"> Beeps on countdown and points</label>
-        <label class="check"><input type="checkbox" name="showAllDevices"> Show all Bluetooth devices when connecting</label>
-        <label>Board protocol
+        <label class="check"><input type="checkbox" name="thickBars"> Thick bars (2 rows + footholds)</label>
+        <label class="check"><input type="checkbox" name="sounds"> Beeps</label>
+        <label class="check"><input type="checkbox" name="showAllDevices"> Show all Bluetooth devices</label>
+        <label class="wide">Board protocol
           <select name="apiLevel">
             <option value="auto">Auto-detect</option>
             <option value="3">API v3 (most boards)</option>
@@ -82,7 +79,7 @@
       </div>
     </details>
 
-    <details class="card">
+    <details class="card howto" name="panel">
       <summary>How to play</summary>
       <ol class="rules">
         <li>Connect the board, then press <strong>Start</strong> and put the phone down.</li>
@@ -92,6 +89,11 @@
         <li>Honor system: if you touch a lit hold or come off the wall, press <strong>I'm out</strong>. Your score shows on the board.</li>
       </ol>
     </details>
+    </div>
+
+    <section class="card board-card">
+      <div id="preview" class="preview"></div>
+    </section>
   </main>
 
   <script type="module" src="js/app.js"></script>
