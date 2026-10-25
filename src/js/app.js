@@ -16,7 +16,7 @@ const showOnPreview = createPreview($('preview'));
 
 // ---------- persistence (best effort; private mode may block storage) ----------
 
-const STORE_KEY = 'gapdrop.settings.v2';
+const STORE_KEY = 'gapdrop.settings.v3';
 const BEST_KEY = 'gapdrop.best';
 const load = (key, fallback) => {
   try {
