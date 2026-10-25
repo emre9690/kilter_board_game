@@ -8,7 +8,6 @@ import { createPreview } from './preview.js';
 
 const YELLOW = [255, 255, 0];
 const GREEN = [0, 255, 0];
-const RED = [255, 0, 0];
 const PURPLE = [160, 0, 255];
 
 const $ = (id) => document.getElementById(id);
@@ -184,9 +183,15 @@ async function endRun() {
   updateScore();
   setMessage(`Score: ${score}`);
   beep(220, 500);
-  if (game) display(renderFrame(game, RED));
-  await sleep(1500);
-  if (id !== runId) return;
+  // Blink the bars where they stopped, then show the score.
+  for (let i = 0; i < 2 && game; i++) {
+    display(new Map());
+    await sleep(300);
+    if (id !== runId) return;
+    display(renderFrame(game));
+    await sleep(450);
+    if (id !== runId) return;
+  }
   display(solid(bitmapPositions(numberBitmap(score)), PURPLE));
 }
 

@@ -19,11 +19,7 @@ export const DEFAULT_SETTINGS = {
   getReadySeconds: 5,
 };
 
-export const BAR_COLORS = [
-  [0, 0, 255], // blue
-  [160, 0, 255], // purple
-  [255, 0, 0], // red
-];
+export const BAR_COLOR = [255, 0, 0]; // red
 
 export const barThickness = (settings) => (settings.thickBars ? 2 : 1);
 
@@ -88,11 +84,6 @@ export function tick(game) {
   return { cleared };
 }
 
-export function barColor(game) {
-  const tier = Math.min(BAR_COLORS.length - 1, Math.floor(game.speedLevel / 2));
-  return BAR_COLORS[tier];
-}
-
 // LED positions lit by one bar: every hole (bolt-on or screw-on) between the bar's top and bottom bolt-on rows, minus the gap.
 // At the bottom row this also picks up the kickboard footholds below it.
 export function barPositions(bar, settings) {
@@ -108,7 +99,7 @@ export function barPositions(bar, settings) {
 }
 
 // Full frame to send to the board: Map(position -> [r, g, b]).
-export function renderFrame(game, color = barColor(game)) {
+export function renderFrame(game, color = BAR_COLOR) {
   const frame = new Map();
   for (const bar of game.bars) {
     for (const pos of barPositions(bar, game.settings)) frame.set(pos, color);
