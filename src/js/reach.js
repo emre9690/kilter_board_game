@@ -29,6 +29,7 @@ const RED = [255, 0, 0];
 
 export function createReach(settings = REACH_DEFAULTS, random = Math.random, board = DEFAULT_BOARD) {
   const s = { ...REACH_DEFAULTS, ...settings };
+  s.minTimeLimit = Math.min(s.minTimeLimit, s.timeLimit); // custom mode can set these in any order
   const game = { settings: s, board, random, score: 0, timeLimit: s.timeLimit, timeLeft: s.timeLimit, target: null };
   game.target = nextTarget(game);
   return game;

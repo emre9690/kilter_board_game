@@ -62,9 +62,10 @@ main {
   .side { display: contents; }
   .connection { order: 1; }
   .game { order: 2; }
-  .board-card { order: 3; }
-  .settings { order: 4; }
-  .howto { order: 5; }
+  .custom { order: 3; }
+  .board-card { order: 4; }
+  .settings { order: 5; }
+  .howto { order: 6; }
 }
 
 .card {
@@ -110,6 +111,11 @@ button.huge.stop { background: var(--bad); border-color: var(--bad); color: #2b0
 
 .board-select { display: block; width: 100%; margin-top: 10px; }
 
+.custom-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.custom-from { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 0.8rem; }
+.custom-from div { display: flex; gap: 4px; }
+.custom-from button { padding: 4px 7px; font-size: 0.75rem; border-radius: 6px; }
+
 .game-type {
   display: block;
   width: 100%;
@@ -123,6 +129,7 @@ button.huge.stop { background: var(--bad); border-color: var(--bad); color: #2b0
 
 .modes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 12px; }
 .modes button { padding: 8px 4px; font-size: 0.85rem; font-weight: 600; }
+.modes button[data-mode="custom"] { grid-column: 1 / -1; }
 .modes button[aria-checked="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
 
 .big-message {
