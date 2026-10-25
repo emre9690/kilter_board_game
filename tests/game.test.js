@@ -65,31 +65,24 @@ test('thin bars spawn at the top, fall one row per tick and score at the bottom'
   assert.equal(game.score, 1);
 });
 
-test('each gap jumps at least a gap width and at most maxGapShift', () => {
-  const game = createGame({ gapWidth: 5, maxGapShift: 8, barSpacing: 1 }, seeded(42));
-  let prev = null;
-  for (let t = 0; t < 500; t++) {
+// Gap starts for each new bar over a run.
+function gapHistory(settings, seed, ticks = 600) {
+  const game = createGame(settings, seeded(seed));
+  const gaps = [];
+  for (let t = 0; t < ticks; t++) {
     tick(game);
-    const g = game.lastGapStart;
-    assert.ok(g >= 0 && g + 5 <= COLS);
-    if (prev !== null && game.ticksSinceSpawn === 0) {
-      const shift = Math.abs(g - prev);
-      assert.ok(shift >= 5 && shift <= 8, `jumped ${shift}`);
-    }
-    prev = g;
+    if (game.ticksSinceSpawn === 0) gaps.push(game.lastGapStart);
   }
-});
+  return gaps;
+}
 
-test('wide gaps still jump at least a gap width when the board allows it', () => {
-  const game = createGame({ gapWidth: 7, maxGapShift: 3, barSpacing: 1 }, seeded(9));
-  let prev = null;
-  for (let t = 0; t < 300; t++) {
-    tick(game);
-    const g = game.lastGapStart;
-    assert.ok(g >= 0 && g + 7 <= COLS);
-    if (prev !== null && game.ticksSinceSpawn === 0) assert.ok(Math.abs(g - prev) >= 5, `jumped ${Math.abs(g - prev)}`);
-    prev = g;
-  }
+test('gaps alternate between the far left and far right, within the jitter', () => {
+  const gaps = gapHistory({ gapWidth: 5, sideJitter: 2, barSpacing: 1 }, 42);
+  const maxStart = COLS - 5;
+  const sides = gaps.map((g) => (g <= 2 ? 'L' : g >= maxStart - 2 ? 'R' : '?'));
+  assert.ok(!sides.includes('?'), `gap away from the edges: ${gaps}`);
+  for (let i = 1; i < sides.length; i++) assert.notEqual(sides[i], sides[i - 1], 'same side twice');
+  assert.ok(new Set(gaps).size > 2, 'jitter adds some variation');
 });
 
 test('thick bars slide in from above and are spaced one row further apart', () => {
@@ -144,21 +137,22 @@ test('difficulty modes get strictly harder', () => {
     assert.ok(modes[i].rowSeconds < modes[i - 1].rowSeconds, 'bars fall faster');
     assert.ok(modes[i].barSpacing < modes[i - 1].barSpacing, 'bars come closer together');
   }
+  // Room for a tall climber: at least 10 open rows between bars in every mode.
+  for (const m of modes) assert.ok(m.barSpacing >= 10);
 });
 
-test('every difficulty plays with gaps on the board and jumps within its limits', () => {
+test('every difficulty plays with gaps on the board, swinging side to side', () => {
   for (const [key, { settings }] of Object.entries(DIFFICULTIES)) {
     const game = createGame(settings, seeded(5));
     let prev = null;
-    for (let t = 0; t < 400; t++) {
+    for (let t = 0; t < 800; t++) {
       tick(game);
       const g = game.lastGapStart;
       assert.ok(g >= 0 && g + settings.gapWidth <= COLS, `${key}: gap off board`);
       if (prev !== null && game.ticksSinceSpawn === 0) {
-        const shift = Math.abs(g - prev);
-        assert.ok(shift >= settings.minGapShift && shift <= settings.maxGapShift, `${key}: jumped ${shift}`);
+        assert.ok(Math.abs(g - prev) >= COLS - settings.gapWidth - 2 * settings.sideJitter, `${key}: gap stayed on one side`);
       }
-      prev = g;
+      if (game.ticksSinceSpawn === 0) prev = g;
     }
     assert.ok(game.score > 0, `${key}: never scored`);
     assert.ok(game.rowSeconds >= settings.minRowSeconds);
