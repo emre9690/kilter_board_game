@@ -4,7 +4,7 @@
 // when time is up the cluster jumps to a new spot far away and you score a point.
 // The cluster goes green -> yellow -> red as time runs low. Honor system: not on it in time = out.
 
-import { COLS, ROWS, HOLES, colToX, rowToY } from './layout.js';
+import { DEFAULT_BOARD } from './layout.js';
 
 export const REACH_DEFAULTS = {
   timeLimit: 10, // seconds for the first cluster
@@ -27,9 +27,9 @@ const GREEN = [0, 255, 0];
 const YELLOW = [255, 255, 0];
 const RED = [255, 0, 0];
 
-export function createReach(settings = REACH_DEFAULTS, random = Math.random) {
+export function createReach(settings = REACH_DEFAULTS, random = Math.random, board = DEFAULT_BOARD) {
   const s = { ...REACH_DEFAULTS, ...settings };
-  const game = { settings: s, random, score: 0, timeLimit: s.timeLimit, timeLeft: s.timeLimit, target: null };
+  const game = { settings: s, board, random, score: 0, timeLimit: s.timeLimit, timeLeft: s.timeLimit, target: null };
   game.target = nextTarget(game);
   return game;
 }
@@ -39,8 +39,8 @@ const center = ({ col, row }, size) => [col + (size - 1) / 2, row + (size - 1) /
 // Random top-left corner for the next cluster, far from the current one.
 function nextTarget(game) {
   const { clusterSize: size, minDistance, bottomMargin } = game.settings;
-  const maxCol = COLS - size;
-  const maxRow = ROWS - size - bottomMargin;
+  const maxCol = game.board.cols - size;
+  const maxRow = game.board.rows - size - bottomMargin;
   const pick = () => ({
     col: Math.floor(game.random() * (maxCol + 1)),
     row: Math.floor(game.random() * (maxRow + 1)),
@@ -82,15 +82,15 @@ export function reachColor(game) {
   return RED;
 }
 
-// Every hole (bolt-ons and the screw-ons between them) inside the cluster's square.
-export function clusterPositions(target, size) {
-  const xMin = colToX(target.col);
-  const xMax = colToX(target.col + size - 1);
-  const yMax = rowToY(target.row);
-  const yMin = rowToY(target.row + size - 1);
-  return HOLES.filter((h) => h.x >= xMin && h.x <= xMax && h.y >= yMin && h.y <= yMax).map((h) => h.position);
+// Every hole (main grid and the in-between ones) inside the cluster's square.
+export function clusterPositions(target, size, board) {
+  const xMin = board.colToX(target.col);
+  const xMax = board.colToX(target.col + size - 1);
+  const yMax = board.rowToY(target.row);
+  const yMin = board.rowToY(target.row + size - 1);
+  return board.holes.filter((h) => h.x >= xMin && h.x <= xMax && h.y >= yMin && h.y <= yMax).map((h) => h.position);
 }
 
 export function renderReach(game, color = reachColor(game)) {
-  return new Map(clusterPositions(game.target, game.settings.clusterSize).map((p) => [p, color]));
+  return new Map(clusterPositions(game.target, game.settings.clusterSize, game.board).map((p) => [p, color]));
 }

@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { COLS, ROWS, HOLES, gridPosition, bitmapPositions } from '../src/js/layout.js';
+import { DEFAULT_BOARD } from '../src/js/layout.js';
+
+const { cols: COLS, rows: ROWS, holes: HOLES, gridPosition, bitmapPositions } = DEFAULT_BOARD;
 import { createGame, tick, renderFrame, barPositions, DEFAULT_SETTINGS, DIFFICULTIES } from '../src/js/game.js';
 import { BIG, numberBitmap } from '../src/js/font.js';
 
@@ -21,7 +23,7 @@ test('12x12 with kickboard layout has 476 LEDs and a full 17 x 19 bolt-on grid',
 test('a thin bar lights every column except the gap', () => {
   const game = createGame({ gapWidth: 5, thickBars: false }, seeded());
   const bar = { row: 3, gapStart: 6 };
-  const lit = new Set(barPositions(bar, game.settings));
+  const lit = new Set(barPositions(bar, game.settings, game.board));
   assert.equal(lit.size, COLS - 5);
   for (let c = 6; c <= 10; c++) assert.ok(!lit.has(gridPosition(c, 3)));
   assert.ok(lit.has(gridPosition(5, 3)) && lit.has(gridPosition(11, 3)));
@@ -34,7 +36,7 @@ test('thick bars are on by default', () => {
 test('thick bars cover two bolt-on rows plus the footholds between, gap kept clear', () => {
   const game = createGame({ gapWidth: 5, thickBars: true }, seeded());
   const bar = { row: 5, gapStart: 6 };
-  const thick = new Set(barPositions(bar, game.settings));
+  const thick = new Set(barPositions(bar, game.settings, game.board));
   for (const row of [5, 6]) {
     for (let c = 0; c < COLS; c++) assert.equal(thick.has(gridPosition(c, row)), c < 6 || c > 10, `col ${c} row ${row}`);
   }
@@ -48,7 +50,7 @@ test('thick bars cover two bolt-on rows plus the footholds between, gap kept cle
 
 test('a thick bar on the bottom row lights the kickboard footholds', () => {
   const game = createGame({ thickBars: true }, seeded());
-  const lit = new Set(barPositions({ row: ROWS - 1, gapStart: 0 }, game.settings));
+  const lit = new Set(barPositions({ row: ROWS - 1, gapStart: 0 }, game.settings, game.board));
   assert.ok(HOLES.filter((h) => h.y === 4 && h.x > 48).every((h) => lit.has(h.position)));
 });
 
