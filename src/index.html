@@ -3,71 +3,73 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#0b0b0c">
+  <meta name="theme-color" content="#0d0f14">
   <title>Gap Drop</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' rx='3' fill='%230b0b0c'/><rect x='1' y='4' width='5' height='2' fill='%23ff3b30'/><rect x='11' y='4' width='4' height='2' fill='%23ff3b30'/><rect x='1' y='10' width='9' height='2' fill='%23ff3b30'/><rect x='14' y='10' width='1' height='2' fill='%23ff3b30'/></svg>">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;800&display=swap">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' rx='3' fill='%230d0f14'/><rect x='1' y='4' width='5' height='2' fill='%235b8cff'/><rect x='11' y='4' width='4' height='2' fill='%235b8cff'/><rect x='1' y='10' width='9' height='2' fill='%23a000ff'/><rect x='14' y='10' width='1' height='2' fill='%23a000ff'/></svg>">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <header class="bar">
-    <div class="logo">Gap Drop</div>
-    <div class="conn">
-      <span class="dot" id="status-dot"></span>
-      <span id="status-text">Offline</span>
-      <button id="btn-connect" class="primary">Connect</button>
-      <button id="btn-reconnect" hidden>Reconnect</button>
-      <button id="btn-disconnect" hidden>Disconnect</button>
-    </div>
+  <header class="top">
+    <h1>Gap Drop</h1>
   </header>
-  <p class="notice" id="status-detail"></p>
-  <p class="notice" id="unsupported" hidden>No Bluetooth in this browser. Use Chrome, or Bluefy on iPhone.</p>
 
   <main>
-    <section class="board-card">
-      <div id="preview" class="preview"></div>
+    <div class="side">
+    <section class="card connection" id="connection">
+      <div class="status-row">
+        <span class="dot" id="status-dot"></span>
+        <span id="status-text">Offline</span>
+      </div>
+      <p class="detail" id="status-detail"></p>
+      <p class="warning" id="unsupported" hidden>No Bluetooth in this browser. Use Chrome, or Bluefy on iPhone.</p>
+      <div class="buttons">
+        <button id="btn-connect" class="primary">Connect</button>
+        <button id="btn-reconnect" hidden>Reconnect</button>
+        <button id="btn-disconnect" hidden>Disconnect</button>
+        <button id="btn-clear" hidden>Clear lights</button>
+      </div>
     </section>
 
-    <div class="side">
-      <section class="game" id="game">
-        <div class="score" id="score">0</div>
-        <div class="stats">
-          <span>Best <b id="best">0</b></span>
-          <span>Speed <b id="speed">1</b></span>
-        </div>
-        <div class="message" id="message">Ready</div>
-        <div class="modes" id="modes" role="radiogroup" aria-label="Difficulty"></div>
-        <button id="btn-main" class="huge">Start</button>
-      </section>
+    <section class="card game" id="game">
+      <div class="scoreboard">
+        <div><span class="label">Score</span><span class="value" id="score">0</span></div>
+        <div><span class="label">Speed</span><span class="value" id="speed">1</span></div>
+        <div><span class="label">Best</span><span class="value" id="best">0</span></div>
+      </div>
+      <div class="modes" id="modes" role="radiogroup" aria-label="Difficulty"></div>
+      <div class="big-message" id="message">Ready</div>
+      <button id="btn-main" class="huge">Start</button>
+    </section>
 
-      <details class="panel howto" name="panel">
-        <summary>Rules</summary>
-        <ul class="rules">
-          <li>Lit holds are lava.</li>
-          <li>Hands and feet in the gap when a bar passes.</li>
-          <li>Touched one? Hit <b>I'm out</b>.</li>
-          <li>Close the Kilter app before connecting.</li>
-        </ul>
-      </details>
+    <details class="card settings" id="settings" name="panel">
+      <summary>Options</summary>
+      <div class="settings-grid">
+        <label class="check"><input type="checkbox" name="sounds"> Beeps</label>
+        <label class="check"><input type="checkbox" name="showAllDevices"> Show all devices</label>
+        <label class="wide">Protocol
+          <select name="apiLevel">
+            <option value="auto">Auto</option>
+            <option value="3">v3</option>
+            <option value="2">v2</option>
+          </select>
+        </label>
+      </div>
+    </details>
 
-      <details class="panel settings" id="settings" name="panel">
-        <summary>Options</summary>
-        <div class="options">
-          <label><input type="checkbox" name="sounds"> Beeps</label>
-          <label><input type="checkbox" name="showAllDevices"> Show all devices</label>
-          <label>Protocol
-            <select name="apiLevel">
-              <option value="auto">Auto</option>
-              <option value="3">v3</option>
-              <option value="2">v2</option>
-            </select>
-          </label>
-          <button id="btn-clear" hidden>Clear lights</button>
-        </div>
-      </details>
+    <details class="card howto" name="panel">
+      <summary>Rules</summary>
+      <ul class="rules">
+        <li>Lit holds are lava.</li>
+        <li>Hands and feet in the gap when a bar passes.</li>
+        <li>Touched one? Hit <strong>I'm out</strong>.</li>
+        <li>Close the Kilter app before connecting.</li>
+      </ul>
+    </details>
     </div>
+
+    <section class="card board-card">
+      <div id="preview" class="preview"></div>
+    </section>
   </main>
 
   <script type="module" src="js/app.js"></script>
