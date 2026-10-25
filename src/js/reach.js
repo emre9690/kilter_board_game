@@ -7,8 +7,8 @@
 import { COLS, ROWS, HOLES, colToX, rowToY } from './layout.js';
 
 export const REACH_DEFAULTS = {
-  timeLimit: 6, // seconds for the first cluster
-  minTimeLimit: 3.5,
+  timeLimit: 10, // seconds for the first cluster
+  minTimeLimit: 5.5,
   shrinkEvery: 3, // clusters reached between time cuts
   shrinkBy: 0.5, // seconds cut each time
   clusterSize: 3, // bolt-on holds per side of the square cluster
@@ -17,10 +17,10 @@ export const REACH_DEFAULTS = {
 };
 
 export const REACH_DIFFICULTIES = {
-  beginner: { label: 'Beginner', settings: { timeLimit: 12, minTimeLimit: 5, shrinkEvery: 4, clusterSize: 3, minDistance: 6 } },
-  intermediate: { label: 'Intermediate', settings: { timeLimit: 6, minTimeLimit: 3.5, shrinkEvery: 3, clusterSize: 3, minDistance: 7 } },
-  hard: { label: 'Hard', settings: { timeLimit: 4.5, minTimeLimit: 2.5, shrinkEvery: 3, clusterSize: 2, minDistance: 8 } },
-  impossible: { label: 'Impossible', settings: { timeLimit: 3, minTimeLimit: 1.8, shrinkEvery: 2, clusterSize: 2, minDistance: 9 } },
+  beginner: { label: 'Beginner', settings: { timeLimit: 12, minTimeLimit: 7.5, shrinkEvery: 4, clusterSize: 3, minDistance: 6 } },
+  intermediate: { label: 'Intermediate', settings: { timeLimit: 10, minTimeLimit: 5.5, shrinkEvery: 3, clusterSize: 3, minDistance: 7 } },
+  hard: { label: 'Hard', settings: { timeLimit: 8, minTimeLimit: 4, shrinkEvery: 3, clusterSize: 2, minDistance: 8 } },
+  impossible: { label: 'Impossible', settings: { timeLimit: 6, minTimeLimit: 3, shrinkEvery: 2, clusterSize: 2, minDistance: 9 } },
 };
 
 const GREEN = [0, 255, 0];
