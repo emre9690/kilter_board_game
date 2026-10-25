@@ -108,6 +108,13 @@ button.huge {
 }
 button.huge.stop { background: var(--bad); border-color: var(--bad); color: #2b0606; }
 
+.game-type {
+  display: block;
+  width: 100%;
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
 .scoreboard { display: grid; grid-template-columns: repeat(3, 1fr); text-align: center; }
 .label { display: block; color: var(--muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; }
 .value { display: block; font-size: 2rem; font-weight: 700; font-variant-numeric: tabular-nums; }

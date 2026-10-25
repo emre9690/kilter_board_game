@@ -4,13 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0d0f14">
-  <title>Gap Drop</title>
+  <title>Kilter Games</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' rx='3' fill='%230d0f14'/><rect x='1' y='4' width='5' height='2' fill='%235b8cff'/><rect x='11' y='4' width='4' height='2' fill='%235b8cff'/><rect x='1' y='10' width='9' height='2' fill='%23a000ff'/><rect x='14' y='10' width='1' height='2' fill='%23a000ff'/></svg>">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <header class="top">
-    <h1>Gap Drop</h1>
+    <h1>Kilter Games</h1>
   </header>
 
   <main>
@@ -31,9 +31,10 @@
     </section>
 
     <section class="card game" id="game">
+      <select id="game-type" class="game-type" aria-label="Game"></select>
       <div class="scoreboard">
         <div><span class="label">Score</span><span class="value" id="score">0</span></div>
-        <div><span class="label">Speed</span><span class="value" id="speed">1</span></div>
+        <div><span class="label" id="stat-label">Speed</span><span class="value" id="stat">1</span></div>
         <div><span class="label">Best</span><span class="value" id="best">0</span></div>
       </div>
       <div class="modes" id="modes" role="radiogroup" aria-label="Difficulty"></div>
@@ -58,10 +59,17 @@
 
     <details class="card howto" name="panel">
       <summary>Rules</summary>
-      <ul class="rules">
+      <ul class="rules" data-rules="drop">
         <li>Lit holds are lava.</li>
         <li>Hands and feet in the gap when a bar passes.</li>
         <li>Touched one? Hit <strong>I'm out</strong>.</li>
+      </ul>
+      <ul class="rules" data-rules="reach" hidden>
+        <li>Get on the lit cluster before it moves.</li>
+        <li>Green, yellow, red: time's running out.</li>
+        <li>Didn't make it? Hit <strong>I'm out</strong>.</li>
+      </ul>
+      <ul class="rules">
         <li>Close the Kilter app before connecting.</li>
       </ul>
     </details>

@@ -1,7 +1,8 @@
-// UI wiring: connection panel, difficulty modes, run timeline (get ready -> 3-2-1-GO -> play -> score), options.
+// UI wiring: connection panel, game + difficulty pickers, run timeline (get ready -> 3-2-1-GO -> play -> score), options.
 
 import { KilterConnection, isBluetoothSupported } from './ble.js';
 import { createGame, tick, renderFrame, DEFAULT_SETTINGS, DIFFICULTIES } from './game.js';
+import { createReach, advanceReach, renderReach, REACH_DIFFICULTIES } from './reach.js';
 import { bitmapPositions } from './layout.js';
 import { BIG, numberBitmap } from './font.js';
 import { createPreview } from './preview.js';
@@ -16,7 +17,7 @@ const showOnPreview = createPreview($('preview'));
 // ---------- persistence (best effort; private mode may block storage) ----------
 
 const STORE_KEY = 'gapdrop.settings.v6';
-const BEST_KEY = 'gapdrop.bests'; // { [difficulty]: score }
+const BEST_KEY = 'gapdrop.bests'; // { [difficulty]: score } for Gap Drop, { ['reach.' + difficulty]: score } for Reach
 const load = (key, fallback) => {
   try {
     const raw = localStorage.getItem(key);
@@ -33,16 +34,55 @@ const save = (key, value) => {
   }
 };
 
+// ---------- games ----------
+
+const REACH_STEP_SECONDS = 0.1;
+
+// Each game: difficulty presets, how one step plays out, what the board shows, and the middle stat.
+const GAMES = {
+  drop: {
+    label: 'Gap Drop',
+    presets: DIFFICULTIES,
+    create: createGame,
+    step(g) {
+      const { cleared } = tick(g);
+      return { scored: cleared > 0, delayMs: g.rowSeconds * 1000 };
+    },
+    render: (g) => renderFrame(g),
+    message: () => 'Climb!',
+    statLabel: 'Speed',
+    stat: (g) => (g?.speedLevel ?? 0) + 1,
+  },
+  reach: {
+    label: 'Reach',
+    presets: REACH_DIFFICULTIES,
+    create: createReach,
+    step(g) {
+      const { scored } = advanceReach(g, REACH_STEP_SECONDS);
+      return { scored, delayMs: REACH_STEP_SECONDS * 1000 };
+    },
+    render: (g) => renderReach(g),
+    message: (g) => g.timeLeft.toFixed(1),
+    statLabel: 'Time',
+    stat: (g, preset) => `${(g?.timeLimit ?? preset.timeLimit).toFixed(1)}s`,
+  },
+};
+
 const UI_DEFAULTS = {
+  gameType: 'drop',
   difficulty: 'intermediate',
   sounds: true,
   showAllDevices: false,
   apiLevel: 'auto',
 };
 const settings = { ...UI_DEFAULTS, ...load(STORE_KEY, {}) };
+if (!GAMES[settings.gameType]) settings.gameType = UI_DEFAULTS.gameType;
 if (!DIFFICULTIES[settings.difficulty]) settings.difficulty = UI_DEFAULTS.difficulty;
+const currentGame = () => GAMES[settings.gameType];
+const currentPreset = () => currentGame().presets[settings.difficulty].settings;
 const bests = load(BEST_KEY, {}) || {};
-const bestScore = () => Number(bests[settings.difficulty]) || 0;
+const bestKey = () => (settings.gameType === 'drop' ? settings.difficulty : `${settings.gameType}.${settings.difficulty}`);
+const bestScore = () => Number(bests[bestKey()]) || 0;
 
 // ---------- board output ----------
 
@@ -58,6 +98,7 @@ function display(frame) {
 }
 
 const solid = (positions, color) => new Map(positions.map((p) => [p, color]));
+const frameKey = (frame) => [...frame].map(([p, c]) => `${p}:${c}`).join('|');
 
 // ---------- sound ----------
 
@@ -107,17 +148,18 @@ document.addEventListener('visibilitychange', () => {
 let phase = 'idle'; // idle | getready | countdown | playing | over
 let runId = 0;
 let game = null;
+let runGame = null; // the GAMES entry for the run in progress
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const setMessage = (text) => ($('message').textContent = text);
-
 
 async function startRun() {
   const id = ++runId;
   const alive = () => id === runId;
   unlockAudio();
   holdWake();
-  game = createGame(DIFFICULTIES[settings.difficulty].settings);
+  runGame = currentGame();
+  game = runGame.create(currentPreset());
   updateScore();
   display(new Map());
 
@@ -143,16 +185,23 @@ async function startRun() {
   if (!alive()) return;
 
   setPhase('playing');
-  setMessage('Climb!');
   display(new Map());
+  let shown = '';
   while (alive()) {
-    const { cleared } = tick(game);
-    if (cleared) {
+    const { scored, delayMs } = runGame.step(game);
+    if (scored) {
       beep(880, 90);
       updateScore();
     }
-    display(renderFrame(game));
-    await sleep(game.rowSeconds * 1000);
+    // Only send when the lights change: Reach steps often but its cluster rarely changes.
+    const frame = runGame.render(game);
+    const key = frameKey(frame);
+    if (key !== shown) {
+      display(frame);
+      shown = key;
+    }
+    setMessage(runGame.message(game));
+    await sleep(delayMs);
   }
 }
 
@@ -163,18 +212,18 @@ async function endRun() {
   releaseWake();
   const score = game?.score ?? 0;
   if (score > bestScore()) {
-    bests[settings.difficulty] = score;
+    bests[bestKey()] = score;
     save(BEST_KEY, bests);
   }
   updateScore();
   setMessage('Out');
   beep(220, 500);
-  // Blink the bars where they stopped, then show the score.
+  // Blink the lights where they stopped, then show the score.
   for (let i = 0; i < 2 && game; i++) {
     display(new Map());
     await sleep(300);
     if (id !== runId) return;
-    display(renderFrame(game));
+    display(runGame.render(game));
     await sleep(450);
     if (id !== runId) return;
   }
@@ -196,11 +245,14 @@ function setPhase(next) {
   btn.textContent = next === 'playing' ? "I'm out" : running ? 'Cancel' : next === 'over' ? 'Play again' : 'Start';
   btn.classList.toggle('stop', running);
   for (const b of $('modes').children) b.disabled = running;
+  $('game-type').disabled = running;
 }
 
 function updateScore() {
-  $('score').textContent = game?.score ?? 0;
-  $('speed').textContent = (game?.speedLevel ?? 0) + 1;
+  $('score').textContent = runGame === currentGame() ? (game?.score ?? 0) : 0;
+  const g = runGame === currentGame() ? game : null;
+  $('stat-label').textContent = currentGame().statLabel;
+  $('stat').textContent = currentGame().stat(g, currentPreset());
   $('best').textContent = bestScore();
 }
 
@@ -259,11 +311,32 @@ if (!isBluetoothSupported()) {
   $('btn-connect').disabled = true;
 }
 
-// ---------- difficulty modes ----------
+// ---------- game + difficulty pickers ----------
 
 function renderModes() {
   for (const b of $('modes').children) b.setAttribute('aria-checked', String(b.dataset.mode === settings.difficulty));
+  $('game-type').value = settings.gameType;
+  for (const list of document.querySelectorAll('[data-rules]')) list.hidden = list.dataset.rules !== settings.gameType;
 }
+
+// After a finished run, switching game or mode goes back to a clean Ready screen.
+function pickerChanged() {
+  save(STORE_KEY, settings);
+  if (phase === 'over') {
+    game = null;
+    setPhase('idle');
+    setMessage('Ready');
+    display(new Map());
+  }
+  renderModes();
+  updateScore();
+}
+
+for (const [key, g] of Object.entries(GAMES)) $('game-type').add(new Option(g.label, key));
+$('game-type').addEventListener('change', () => {
+  settings.gameType = $('game-type').value;
+  pickerChanged();
+});
 
 for (const [key, mode] of Object.entries(DIFFICULTIES)) {
   const b = document.createElement('button');
@@ -273,15 +346,7 @@ for (const [key, mode] of Object.entries(DIFFICULTIES)) {
   b.textContent = mode.label;
   b.addEventListener('click', () => {
     settings.difficulty = key;
-    save(STORE_KEY, settings);
-    if (phase === 'over') {
-      game = null;
-      setPhase('idle');
-      setMessage('Ready');
-      display(new Map());
-    }
-    renderModes();
-    updateScore();
+    pickerChanged();
   });
   $('modes').appendChild(b);
 }

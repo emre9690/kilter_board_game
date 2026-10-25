@@ -2,6 +2,7 @@
 //
 // A bar is a full-width band of lit holds with a gap of `gapWidth` columns. Thin bars are one
 // bolt-on row; thick bars are two bolt-on rows plus the screw-on footholds between them.
+// Gaps alternate between the far left and far right of the board, give or take `sideJitter` columns.
 // Every tick all bars drop one row; a bar that falls off the bottom scores a point.
 // Honor system: touching a lit hold means you're out.
 
@@ -13,9 +14,8 @@ export const DEFAULT_SETTINGS = {
   minRowSeconds: 0.6,
   speedUpEvery: 3, // bars cleared between speed-ups (0 = never)
   speedUpFactor: 0.9,
-  barSpacing: 7, // rows between consecutive bars (thick bars add their extra row on top)
-  minGapShift: null, // min columns the gap jumps between bars (null = gapWidth, so gaps never overlap)
-  maxGapShift: 8, // max columns the gap jumps between bars
+  barSpacing: 14, // rows between consecutive bars (thick bars add their extra row on top)
+  sideJitter: 2, // how many columns in from the edge a gap may sit
   thickBars: true, // two bolt-on rows + the screw-on footholds between them
   getReadySeconds: 5,
 };
@@ -24,19 +24,19 @@ export const DEFAULT_SETTINGS = {
 export const DIFFICULTIES = {
   beginner: {
     label: 'Beginner',
-    settings: { gapWidth: 7, rowSeconds: 1.6, minRowSeconds: 1.0, barSpacing: 9, minGapShift: 3, maxGapShift: 6, speedUpEvery: 5, speedUpFactor: 0.93 },
+    settings: { gapWidth: 7, rowSeconds: 1.6, minRowSeconds: 1.0, barSpacing: 18, sideJitter: 1, speedUpEvery: 5, speedUpFactor: 0.93 },
   },
   intermediate: {
     label: 'Intermediate',
-    settings: { gapWidth: 5, rowSeconds: 1.2, minRowSeconds: 0.7, barSpacing: 7, minGapShift: 5, maxGapShift: 8, speedUpEvery: 3, speedUpFactor: 0.9 },
+    settings: { gapWidth: 5, rowSeconds: 1.2, minRowSeconds: 0.7, barSpacing: 14, sideJitter: 2, speedUpEvery: 3, speedUpFactor: 0.9 },
   },
   hard: {
     label: 'Hard',
-    settings: { gapWidth: 4, rowSeconds: 0.9, minRowSeconds: 0.55, barSpacing: 6, minGapShift: 4, maxGapShift: 9, speedUpEvery: 3, speedUpFactor: 0.88 },
+    settings: { gapWidth: 4, rowSeconds: 0.9, minRowSeconds: 0.55, barSpacing: 12, sideJitter: 2, speedUpEvery: 3, speedUpFactor: 0.88 },
   },
   impossible: {
     label: 'Impossible',
-    settings: { gapWidth: 3, rowSeconds: 0.6, minRowSeconds: 0.4, barSpacing: 5, minGapShift: 5, maxGapShift: 12, speedUpEvery: 2, speedUpFactor: 0.85 },
+    settings: { gapWidth: 3, rowSeconds: 0.6, minRowSeconds: 0.4, barSpacing: 10, sideJitter: 3, speedUpEvery: 2, speedUpFactor: 0.85 },
   },
 };
 
@@ -56,26 +56,18 @@ export function createGame(settings = DEFAULT_SETTINGS, random = Math.random) {
     rowSeconds: s.rowSeconds,
     ticksSinceSpawn: Infinity,
     lastGapStart: null,
+    lastSide: null,
   };
 }
 
 function nextGapStart(game) {
-  const { gapWidth, maxGapShift } = game.settings;
-  const minShift = game.settings.minGapShift ?? gapWidth;
+  const { gapWidth, sideJitter } = game.settings;
   const maxStart = COLS - gapWidth;
   const rand = (n) => Math.floor(game.random() * n);
-  const last = game.lastGapStart;
-  if (last === null) return rand(maxStart + 1);
-  // Jump at least minShift so the gap clearly moves, but cap the jump to stay reachable.
-  const maxShift = Math.max(maxGapShift, minShift);
-  const options = [];
-  for (let c = 0; c <= maxStart; c++) {
-    const shift = Math.abs(c - last);
-    if (shift >= minShift && shift <= maxShift) options.push(c);
-  }
-  if (options.length) return options[rand(options.length)];
-  // Gap too wide for a clean jump: go as far as the board allows.
-  return last * 2 < maxStart ? maxStart : 0;
+  const side = game.lastSide === null ? (rand(2) ? 'right' : 'left') : game.lastSide === 'left' ? 'right' : 'left';
+  game.lastSide = side;
+  const offset = rand(Math.min(sideJitter, maxStart) + 1);
+  return side === 'left' ? offset : maxStart - offset;
 }
 
 // Advance one row. Returns { cleared } with the number of bars that left the board.
