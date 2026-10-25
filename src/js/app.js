@@ -1,7 +1,7 @@
-// UI wiring: connection panel, run timeline (get ready -> 3-2-1-GO -> play -> score), settings.
+// UI wiring: connection panel, difficulty modes, run timeline (get ready -> 3-2-1-GO -> play -> score), options.
 
 import { KilterConnection, isBluetoothSupported } from './ble.js';
-import { createGame, tick, renderFrame, DEFAULT_SETTINGS } from './game.js';
+import { createGame, tick, renderFrame, DEFAULT_SETTINGS, DIFFICULTIES } from './game.js';
 import { bitmapPositions } from './layout.js';
 import { BIG, numberBitmap } from './font.js';
 import { createPreview } from './preview.js';
@@ -15,8 +15,8 @@ const showOnPreview = createPreview($('preview'));
 
 // ---------- persistence (best effort; private mode may block storage) ----------
 
-const STORE_KEY = 'gapdrop.settings.v5';
-const BEST_KEY = 'gapdrop.best';
+const STORE_KEY = 'gapdrop.settings.v6';
+const BEST_KEY = 'gapdrop.bests'; // { [difficulty]: score }
 const load = (key, fallback) => {
   try {
     const raw = localStorage.getItem(key);
@@ -34,19 +34,15 @@ const save = (key, value) => {
 };
 
 const UI_DEFAULTS = {
-  gapWidth: DEFAULT_SETTINGS.gapWidth,
-  rowSeconds: DEFAULT_SETTINGS.rowSeconds,
-  barSpacing: DEFAULT_SETTINGS.barSpacing,
-  maxGapShift: DEFAULT_SETTINGS.maxGapShift,
-  getReadySeconds: DEFAULT_SETTINGS.getReadySeconds,
-  speedUp: true,
-  thickBars: DEFAULT_SETTINGS.thickBars,
+  difficulty: 'intermediate',
   sounds: true,
   showAllDevices: false,
   apiLevel: 'auto',
 };
 const settings = { ...UI_DEFAULTS, ...load(STORE_KEY, {}) };
-let best = Number(load(BEST_KEY, 0)) || 0;
+if (!DIFFICULTIES[settings.difficulty]) settings.difficulty = UI_DEFAULTS.difficulty;
+const bests = load(BEST_KEY, {}) || {};
+const bestScore = () => Number(bests[settings.difficulty]) || 0;
 
 // ---------- board output ----------
 
@@ -115,28 +111,18 @@ let game = null;
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const setMessage = (text) => ($('message').textContent = text);
 
-function gameSettings() {
-  return {
-    gapWidth: settings.gapWidth,
-    rowSeconds: settings.rowSeconds,
-    barSpacing: settings.barSpacing,
-    maxGapShift: settings.maxGapShift,
-    thickBars: settings.thickBars,
-    speedUpEvery: settings.speedUp ? DEFAULT_SETTINGS.speedUpEvery : 0,
-  };
-}
 
 async function startRun() {
   const id = ++runId;
   const alive = () => id === runId;
   unlockAudio();
   holdWake();
-  game = createGame(gameSettings());
+  game = createGame(DIFFICULTIES[settings.difficulty].settings);
   updateScore();
   display(new Map());
 
   setPhase('getready');
-  for (let t = settings.getReadySeconds; t > 0; t--) {
+  for (let t = DEFAULT_SETTINGS.getReadySeconds; t > 0; t--) {
     setMessage(`Get on the wall… ${t}`);
     await sleep(1000);
     if (!alive()) return;
@@ -176,9 +162,9 @@ async function endRun() {
   setPhase('over');
   releaseWake();
   const score = game?.score ?? 0;
-  if (score > best) {
-    best = score;
-    save(BEST_KEY, best);
+  if (score > bestScore()) {
+    bests[settings.difficulty] = score;
+    save(BEST_KEY, bests);
   }
   updateScore();
   setMessage(`Score: ${score}`);
@@ -209,12 +195,13 @@ function setPhase(next) {
   const running = next === 'getready' || next === 'countdown' || next === 'playing';
   btn.textContent = next === 'playing' ? "I'm out" : running ? 'Cancel' : next === 'over' ? 'Play again' : 'Start';
   btn.classList.toggle('stop', running);
+  for (const b of $('modes').children) b.disabled = running;
 }
 
 function updateScore() {
   $('score').textContent = game?.score ?? 0;
   $('speed').textContent = (game?.speedLevel ?? 0) + 1;
-  $('best').textContent = best;
+  $('best').textContent = bestScore();
 }
 
 function mainAction() {
@@ -272,30 +259,48 @@ if (!isBluetoothSupported()) {
   $('btn-connect').disabled = true;
 }
 
-// ---------- settings form ----------
+// ---------- difficulty modes ----------
 
-const FORMAT = {
-  gapWidth: (v) => `${v} holds`,
-  rowSeconds: (v) => `${Number(v).toFixed(1)} s per row`,
-  barSpacing: (v) => `${v} rows`,
-  maxGapShift: (v) => `${Math.max(v, settings.gapWidth)} holds`,
-  getReadySeconds: (v) => (Number(v) === 0 ? 'none' : `${v} s`),
-};
+function describeMode(key) {
+  const m = DIFFICULTIES[key].settings;
+  return `${m.gapWidth}-hold gap · ${m.rowSeconds.toFixed(1)} s per row · speeds up every ${m.speedUpEvery} bars`;
+}
 
-const form = $('settings');
-for (const input of form.querySelectorAll('input, select')) {
+function renderModes() {
+  for (const b of $('modes').children) b.setAttribute('aria-checked', String(b.dataset.mode === settings.difficulty));
+  $('mode-detail').textContent = describeMode(settings.difficulty);
+}
+
+for (const [key, mode] of Object.entries(DIFFICULTIES)) {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.setAttribute('role', 'radio');
+  b.dataset.mode = key;
+  b.textContent = mode.label;
+  b.addEventListener('click', () => {
+    settings.difficulty = key;
+    save(STORE_KEY, settings);
+    if (phase === 'over') {
+      game = null;
+      setPhase('idle');
+      setMessage('Ready');
+      display(new Map());
+    }
+    renderModes();
+    updateScore();
+  });
+  $('modes').appendChild(b);
+}
+
+// ---------- options ----------
+
+for (const input of $('settings').querySelectorAll('input, select')) {
   const key = input.name;
   if (input.type === 'checkbox') input.checked = !!settings[key];
   else input.value = settings[key];
-  const out = $(`out-${key}`);
-  if (out) out.textContent = FORMAT[key](input.value);
 
   input.addEventListener('input', () => {
-    if (input.type === 'checkbox') settings[key] = input.checked;
-    else if (input.type === 'range') settings[key] = Number(input.value);
-    else settings[key] = input.value;
-    if (out) out.textContent = FORMAT[key](input.value);
-    if (key === 'gapWidth') $('out-maxGapShift').textContent = FORMAT.maxGapShift(settings.maxGapShift);
+    settings[key] = input.type === 'checkbox' ? input.checked : input.value;
     if (key === 'apiLevel') {
       applyApiLevel();
       renderStatus(connection.status);
@@ -304,6 +309,7 @@ for (const input of form.querySelectorAll('input, select')) {
   });
 }
 
+renderModes();
 setPhase('idle');
 updateScore();
 renderStatus('disconnected');

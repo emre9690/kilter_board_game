@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { COLS, ROWS, HOLES, gridPosition, bitmapPositions } from '../src/js/layout.js';
-import { createGame, tick, renderFrame, barPositions, DEFAULT_SETTINGS } from '../src/js/game.js';
+import { createGame, tick, renderFrame, barPositions, DEFAULT_SETTINGS, DIFFICULTIES } from '../src/js/game.js';
 import { BIG, numberBitmap } from '../src/js/font.js';
 
 const seeded = (seed = 1) => () => {
@@ -134,5 +134,33 @@ test('countdown digits, GO and scores fit on the board', () => {
     assert.ok(bitmap[0].length <= COLS, `score ${n} too wide`);
     const expected = bitmap.join('').split('').filter((ch) => ch === '#').length;
     assert.equal(bitmapPositions(bitmap).length, expected);
+  }
+});
+
+test('difficulty modes get strictly harder', () => {
+  const modes = ['beginner', 'intermediate', 'hard', 'impossible'].map((k) => DIFFICULTIES[k].settings);
+  for (let i = 1; i < modes.length; i++) {
+    assert.ok(modes[i].gapWidth < modes[i - 1].gapWidth, 'gap shrinks');
+    assert.ok(modes[i].rowSeconds < modes[i - 1].rowSeconds, 'bars fall faster');
+    assert.ok(modes[i].barSpacing < modes[i - 1].barSpacing, 'bars come closer together');
+  }
+});
+
+test('every difficulty plays with gaps on the board and jumps within its limits', () => {
+  for (const [key, { settings }] of Object.entries(DIFFICULTIES)) {
+    const game = createGame(settings, seeded(5));
+    let prev = null;
+    for (let t = 0; t < 400; t++) {
+      tick(game);
+      const g = game.lastGapStart;
+      assert.ok(g >= 0 && g + settings.gapWidth <= COLS, `${key}: gap off board`);
+      if (prev !== null && game.ticksSinceSpawn === 0) {
+        const shift = Math.abs(g - prev);
+        assert.ok(shift >= settings.minGapShift && shift <= settings.maxGapShift, `${key}: jumped ${shift}`);
+      }
+      prev = g;
+    }
+    assert.ok(game.score > 0, `${key}: never scored`);
+    assert.ok(game.rowSeconds >= settings.minRowSeconds);
   }
 });

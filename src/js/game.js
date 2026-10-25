@@ -14,9 +14,30 @@ export const DEFAULT_SETTINGS = {
   speedUpEvery: 3, // bars cleared between speed-ups (0 = never)
   speedUpFactor: 0.9,
   barSpacing: 7, // rows between consecutive bars (thick bars add their extra row on top)
-  maxGapShift: 8, // max columns the gap jumps between bars (never less than gapWidth)
+  minGapShift: null, // min columns the gap jumps between bars (null = gapWidth, so gaps never overlap)
+  maxGapShift: 8, // max columns the gap jumps between bars
   thickBars: true, // two bolt-on rows + the screw-on footholds between them
   getReadySeconds: 5,
+};
+
+// Difficulty presets, applied on top of DEFAULT_SETTINGS.
+export const DIFFICULTIES = {
+  beginner: {
+    label: 'Beginner',
+    settings: { gapWidth: 7, rowSeconds: 1.6, minRowSeconds: 1.0, barSpacing: 9, minGapShift: 3, maxGapShift: 6, speedUpEvery: 5, speedUpFactor: 0.93 },
+  },
+  intermediate: {
+    label: 'Intermediate',
+    settings: { gapWidth: 5, rowSeconds: 1.2, minRowSeconds: 0.7, barSpacing: 7, minGapShift: 5, maxGapShift: 8, speedUpEvery: 3, speedUpFactor: 0.9 },
+  },
+  hard: {
+    label: 'Hard',
+    settings: { gapWidth: 4, rowSeconds: 0.9, minRowSeconds: 0.55, barSpacing: 6, minGapShift: 4, maxGapShift: 9, speedUpEvery: 3, speedUpFactor: 0.88 },
+  },
+  impossible: {
+    label: 'Impossible',
+    settings: { gapWidth: 3, rowSeconds: 0.6, minRowSeconds: 0.4, barSpacing: 5, minGapShift: 5, maxGapShift: 12, speedUpEvery: 2, speedUpFactor: 0.85 },
+  },
 };
 
 export const BAR_COLOR = [255, 0, 0]; // red
@@ -40,16 +61,17 @@ export function createGame(settings = DEFAULT_SETTINGS, random = Math.random) {
 
 function nextGapStart(game) {
   const { gapWidth, maxGapShift } = game.settings;
+  const minShift = game.settings.minGapShift ?? gapWidth;
   const maxStart = COLS - gapWidth;
   const rand = (n) => Math.floor(game.random() * n);
   const last = game.lastGapStart;
   if (last === null) return rand(maxStart + 1);
-  // Jump at least a full gap width so consecutive gaps never overlap, but cap the jump to stay reachable.
-  const maxShift = Math.max(maxGapShift, gapWidth);
+  // Jump at least minShift so the gap clearly moves, but cap the jump to stay reachable.
+  const maxShift = Math.max(maxGapShift, minShift);
   const options = [];
   for (let c = 0; c <= maxStart; c++) {
     const shift = Math.abs(c - last);
-    if (shift >= gapWidth && shift <= maxShift) options.push(c);
+    if (shift >= minShift && shift <= maxShift) options.push(c);
   }
   if (options.length) return options[rand(options.length)];
   // Gap too wide for a clean jump: go as far as the board allows.

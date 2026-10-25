@@ -118,6 +118,11 @@ button.huge.stop { background: var(--bad); border-color: var(--bad); color: #2b0
 .label { display: block; color: var(--muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; }
 .value { display: block; font-size: 2rem; font-weight: 700; font-variant-numeric: tabular-nums; }
 
+.modes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 12px; }
+.modes button { padding: 8px 4px; font-size: 0.85rem; font-weight: 600; }
+.modes button[aria-checked="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+.mode-detail { text-align: center; color: var(--muted); font-size: 0.85rem; margin: 8px 0 0; }
+
 .big-message {
   text-align: center;
   font-size: 2.2rem;
