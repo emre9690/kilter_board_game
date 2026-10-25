@@ -42,31 +42,16 @@
         <div><span class="label">Speed</span><span class="value" id="speed">1</span></div>
         <div><span class="label">Best</span><span class="value" id="best">0</span></div>
       </div>
+      <div class="modes" id="modes" role="radiogroup" aria-label="Difficulty"></div>
+      <p class="mode-detail" id="mode-detail"></p>
       <div class="big-message" id="message">Ready</div>
       <button id="btn-main" class="huge">Start</button>
       <p class="hint desktop-only">Space bar also starts the run and ends it.</p>
     </section>
 
     <details class="card settings" id="settings" name="panel">
-      <summary>Settings</summary>
+      <summary>Options</summary>
       <div class="settings-grid">
-        <label>Gap width <output id="out-gapWidth"></output>
-          <input type="range" name="gapWidth" min="3" max="9" step="1">
-        </label>
-        <label>Start speed <output id="out-rowSeconds"></output>
-          <input type="range" name="rowSeconds" min="0.6" max="3" step="0.1">
-        </label>
-        <label>Rows between bars <output id="out-barSpacing"></output>
-          <input type="range" name="barSpacing" min="4" max="12" step="1">
-        </label>
-        <label>Gap jumps at most <output id="out-maxGapShift"></output>
-          <input type="range" name="maxGapShift" min="3" max="12" step="1">
-        </label>
-        <label>Get-ready time <output id="out-getReadySeconds"></output>
-          <input type="range" name="getReadySeconds" min="0" max="15" step="1">
-        </label>
-        <label class="check"><input type="checkbox" name="speedUp"> Speed up as you score</label>
-        <label class="check"><input type="checkbox" name="thickBars"> Thick bars (2 rows + footholds)</label>
         <label class="check"><input type="checkbox" name="sounds"> Beeps</label>
         <label class="check"><input type="checkbox" name="showAllDevices"> Show all Bluetooth devices</label>
         <label class="wide">Board protocol
@@ -86,6 +71,7 @@
         <li>Get on the wall near the bottom while the timer runs. The board counts down <strong>3 – 2 – 1 – GO</strong>.</li>
         <li>Bars fall from the top. <strong>Lit holds are lava.</strong> When a bar reaches you, every hand and foot has to be on a hold in the gap.</li>
         <li>Each bar that reaches the bottom is a point. Bars get faster as you go.</li>
+        <li>Pick a mode before you start: <strong>Beginner</strong> has wide gaps and slow bars, <strong>Impossible</strong> has 3-hold gaps and very fast bars. Best scores are kept per mode.</li>
         <li>Honor system: if you touch a lit hold or come off the wall, press <strong>I'm out</strong>. Your score shows on the board.</li>
       </ol>
     </details>
