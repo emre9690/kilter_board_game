@@ -17,7 +17,7 @@ export const REACH_DEFAULTS = {
 };
 
 export const REACH_DIFFICULTIES = {
-  beginner: { label: 'Beginner', settings: { timeLimit: 8, minTimeLimit: 5, shrinkEvery: 4, clusterSize: 3, minDistance: 6 } },
+  beginner: { label: 'Beginner', settings: { timeLimit: 12, minTimeLimit: 5, shrinkEvery: 4, clusterSize: 3, minDistance: 6 } },
   intermediate: { label: 'Intermediate', settings: { timeLimit: 6, minTimeLimit: 3.5, shrinkEvery: 3, clusterSize: 3, minDistance: 7 } },
   hard: { label: 'Hard', settings: { timeLimit: 4.5, minTimeLimit: 2.5, shrinkEvery: 3, clusterSize: 2, minDistance: 8 } },
   impossible: { label: 'Impossible', settings: { timeLimit: 3, minTimeLimit: 1.8, shrinkEvery: 2, clusterSize: 2, minDistance: 9 } },
