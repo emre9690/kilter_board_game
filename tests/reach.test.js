@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { COLS, ROWS, gridPosition } from '../src/js/layout.js';
+import { DEFAULT_BOARD } from '../src/js/layout.js';
+
+const { cols: COLS, rows: ROWS, gridPosition } = DEFAULT_BOARD;
 import { createReach, advanceReach, reachColor, clusterPositions, renderReach, REACH_DIFFICULTIES } from '../src/js/reach.js';
 
 const seeded = (seed = 1) => () => {
@@ -15,7 +17,7 @@ const run = (game, seconds, dt = 0.1) => {
 };
 
 test('a cluster covers its square of bolt-ons plus the screw-ons inside it', () => {
-  const lit = new Set(clusterPositions({ col: 4, row: 6 }, 3));
+  const lit = new Set(clusterPositions({ col: 4, row: 6 }, 3, DEFAULT_BOARD));
   for (let c = 4; c < 7; c++) for (let r = 6; r < 9; r++) assert.ok(lit.has(gridPosition(c, r)));
   assert.ok(lit.size > 9, 'includes screw-on footholds');
   assert.ok(!lit.has(gridPosition(7, 6)) && !lit.has(gridPosition(4, 9)));

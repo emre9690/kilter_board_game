@@ -6,7 +6,7 @@
 // Every tick all bars drop one row; a bar that falls off the bottom scores a point.
 // Honor system: touching a lit hold means you're out.
 
-import { COLS, ROWS, HOLES, colToX, rowToY } from './layout.js';
+import { DEFAULT_BOARD } from './layout.js';
 
 export const DEFAULT_SETTINGS = {
   gapWidth: 5, // holds
@@ -44,11 +44,14 @@ export const BAR_COLOR = [255, 0, 0]; // red
 
 export const barThickness = (settings) => (settings.thickBars ? 2 : 1);
 
-export function createGame(settings = DEFAULT_SETTINGS, random = Math.random) {
+export function createGame(settings = DEFAULT_SETTINGS, random = Math.random, board = DEFAULT_BOARD) {
   const s = { ...DEFAULT_SETTINGS, ...settings };
-  s.gapWidth = Math.max(1, Math.min(COLS - 2, Math.round(s.gapWidth)));
+  // Narrow boards: at most half the width is gap, and the left and right gaps never overlap.
+  s.gapWidth = Math.max(2, Math.min(Math.floor(board.cols / 2), Math.round(s.gapWidth)));
+  s.sideJitter = Math.min(s.sideJitter, Math.max(0, Math.floor((board.cols - 2 * s.gapWidth) / 2)));
   return {
     settings: s,
+    board,
     random,
     bars: [],
     score: 0,
@@ -62,7 +65,7 @@ export function createGame(settings = DEFAULT_SETTINGS, random = Math.random) {
 
 function nextGapStart(game) {
   const { gapWidth, sideJitter } = game.settings;
-  const maxStart = COLS - gapWidth;
+  const maxStart = game.board.cols - gapWidth;
   const rand = (n) => Math.floor(game.random() * n);
   const side = game.lastSide === null ? (rand(2) ? 'right' : 'left') : game.lastSide === 'left' ? 'right' : 'left';
   game.lastSide = side;
@@ -74,7 +77,7 @@ function nextGapStart(game) {
 export function tick(game) {
   for (const bar of game.bars) bar.row += 1;
   const before = game.bars.length;
-  game.bars = game.bars.filter((bar) => bar.row < ROWS);
+  game.bars = game.bars.filter((bar) => bar.row < game.board.rows);
   const cleared = before - game.bars.length;
 
   for (let i = 0; i < cleared; i++) {
@@ -100,14 +103,14 @@ export function tick(game) {
 
 // LED positions lit by one bar: every hole (bolt-on or screw-on) between the bar's top and bottom bolt-on rows, minus the gap.
 // At the bottom row this also picks up the kickboard footholds below it.
-export function barPositions(bar, settings) {
+export function barPositions(bar, settings, board) {
   const gapEnd = bar.gapStart + settings.gapWidth - 1;
-  const yTop = rowToY(bar.row);
-  const yBottom = rowToY(bar.row + barThickness(settings) - 1);
+  const yTop = board.rowToY(bar.row);
+  const yBottom = board.rowToY(bar.row + barThickness(settings) - 1);
   // Screw-ons half a column outside the gap edge count as part of the gap.
-  const gapLeftX = colToX(bar.gapStart) - 8;
-  const gapRightX = colToX(gapEnd) + 8;
-  return HOLES.filter((h) => h.y <= yTop && h.y >= yBottom && !(h.x > gapLeftX && h.x < gapRightX)).map(
+  const gapLeftX = board.colToX(bar.gapStart) - 8;
+  const gapRightX = board.colToX(gapEnd) + 8;
+  return board.holes.filter((h) => h.y <= yTop && h.y >= yBottom && !(h.x > gapLeftX && h.x < gapRightX)).map(
     (h) => h.position,
   );
 }
@@ -116,7 +119,7 @@ export function barPositions(bar, settings) {
 export function renderFrame(game, color = BAR_COLOR) {
   const frame = new Map();
   for (const bar of game.bars) {
-    for (const pos of barPositions(bar, game.settings)) frame.set(pos, color);
+    for (const pos of barPositions(bar, game.settings, game.board)) frame.set(pos, color);
   }
   return frame;
 }

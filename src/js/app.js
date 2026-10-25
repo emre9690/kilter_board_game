@@ -1,9 +1,9 @@
-// UI wiring: connection panel, game + difficulty pickers, run timeline (get ready -> 3-2-1-GO -> play -> score), options.
+// UI wiring: connection panel, board + game + difficulty pickers, run timeline (get ready -> 3-2-1-GO -> play -> score), options.
 
 import { KilterConnection, isBluetoothSupported } from './ble.js';
 import { createGame, tick, renderFrame, DEFAULT_SETTINGS, DIFFICULTIES } from './game.js';
 import { createReach, advanceReach, renderReach, REACH_DIFFICULTIES } from './reach.js';
-import { bitmapPositions } from './layout.js';
+import { getBoard, BOARD_LIST, DEFAULT_BOARD_ID } from './layout.js';
 import { BIG, numberBitmap } from './font.js';
 import { createPreview } from './preview.js';
 
@@ -12,7 +12,6 @@ const GREEN = [0, 255, 0];
 const PURPLE = [160, 0, 255];
 
 const $ = (id) => document.getElementById(id);
-const showOnPreview = createPreview($('preview'));
 
 // ---------- persistence (best effort; private mode may block storage) ----------
 
@@ -69,6 +68,7 @@ const GAMES = {
 };
 
 const UI_DEFAULTS = {
+  boardId: DEFAULT_BOARD_ID,
   gameType: 'drop',
   difficulty: 'intermediate',
   sounds: true,
@@ -78,6 +78,9 @@ const UI_DEFAULTS = {
 const settings = { ...UI_DEFAULTS, ...load(STORE_KEY, {}) };
 if (!GAMES[settings.gameType]) settings.gameType = UI_DEFAULTS.gameType;
 if (!DIFFICULTIES[settings.difficulty]) settings.difficulty = UI_DEFAULTS.difficulty;
+let board = getBoard(settings.boardId);
+settings.boardId = board.id;
+let showOnPreview = createPreview($('preview'), board);
 const currentGame = () => GAMES[settings.gameType];
 const currentPreset = () => currentGame().presets[settings.difficulty].settings;
 const bests = load(BEST_KEY, {}) || {};
@@ -159,7 +162,7 @@ async function startRun() {
   unlockAudio();
   holdWake();
   runGame = currentGame();
-  game = runGame.create(currentPreset());
+  game = runGame.create(currentPreset(), Math.random, board);
   updateScore();
   display(new Map());
 
@@ -173,13 +176,14 @@ async function startRun() {
   setPhase('countdown');
   for (const n of [3, 2, 1]) {
     setMessage(String(n));
-    display(solid(bitmapPositions(BIG[n]), YELLOW));
+    display(solid(board.bitmapPositions(BIG[n]), YELLOW));
     beep(660);
     await sleep(1000);
     if (!alive()) return;
   }
   setMessage('GO!');
-  display(solid(bitmapPositions(BIG.GO), GREEN));
+  const go = board.cols >= BIG.GO[0].length ? BIG.GO : BIG.GO_SMALL;
+  display(solid(board.bitmapPositions(go), GREEN));
   beep(990, 300);
   await sleep(900);
   if (!alive()) return;
@@ -227,7 +231,7 @@ async function endRun() {
     await sleep(450);
     if (id !== runId) return;
   }
-  display(solid(bitmapPositions(numberBitmap(score)), PURPLE));
+  display(solid(board.bitmapPositions(numberBitmap(score, board.cols)), PURPLE));
 }
 
 function cancelRun() {
@@ -246,6 +250,7 @@ function setPhase(next) {
   btn.classList.toggle('stop', running);
   for (const b of $('modes').children) b.disabled = running;
   $('game-type').disabled = running;
+  $('board').disabled = running;
 }
 
 function updateScore() {
@@ -333,6 +338,25 @@ function pickerChanged() {
 }
 
 for (const [key, g] of Object.entries(GAMES)) $('game-type').add(new Option(g.label, key));
+
+const FAMILIES = { original: 'Kilter Board Original', homewall: 'Kilter Board Homewall' };
+for (const [family, label] of Object.entries(FAMILIES)) {
+  const group = document.createElement('optgroup');
+  group.label = label;
+  for (const b of BOARD_LIST.filter((b) => b.family === family)) group.appendChild(new Option(b.name, b.id));
+  $('board').appendChild(group);
+}
+$('board').value = board.id;
+$('board').addEventListener('change', () => {
+  board = getBoard($('board').value);
+  settings.boardId = board.id;
+  showOnPreview = createPreview($('preview'), board);
+  game = null;
+  if (phase === 'over') setPhase('idle');
+  setMessage('Ready');
+  pickerChanged();
+  display(new Map());
+});
 $('game-type').addEventListener('change', () => {
   settings.gameType = $('game-type').value;
   pickerChanged();
