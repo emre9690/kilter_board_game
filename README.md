@@ -2,6 +2,8 @@
 
 Arcade games for the Kilter Board, played on the wall. Your phone talks to the board over Bluetooth and the LEDs become the game.
 
+**Play now: [kiltergame.vercel.app](https://kiltergame.vercel.app)**
+
 <h3 align="center">Gap Drop</h3>
 <p align="center">
   <img src="docs/gap-drop.gif" alt="Gap Drop: red bars with a gap fall down the board on screen and on the wall while the climber moves into each gap" width="480">
@@ -42,7 +44,7 @@ npm start   # serves src/ at http://localhost:8000
 npm test    # node --test
 ```
 
-Web Bluetooth needs HTTPS, or `localhost`. To host it, import the repo into [Vercel](https://vercel.com). `vercel.json` already serves `src/`.
+Web Bluetooth needs HTTPS, or `localhost`. The live site is hosted on [Vercel](https://vercel.com) and redeploys on every push to `main`. `vercel.json` serves `src/`.
 
 ## How it works
 
