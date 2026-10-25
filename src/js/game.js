@@ -13,7 +13,7 @@ export const DEFAULT_SETTINGS = {
   speedUpEvery: 3, // bars cleared between speed-ups (0 = never)
   speedUpFactor: 0.9,
   barSpacing: 7, // rows between consecutive bars
-  maxGapShift: 4, // max columns the gap moves between bars
+  maxGapShift: 8, // max columns the gap jumps between bars (never less than gapWidth)
   thickBars: false, // also light the screw-on rows above/below each bar
   getReadySeconds: 5,
 };
@@ -43,13 +43,18 @@ function nextGapStart(game) {
   const { gapWidth, maxGapShift } = game.settings;
   const maxStart = COLS - gapWidth;
   const rand = (n) => Math.floor(game.random() * n);
-  if (game.lastGapStart === null) return rand(maxStart + 1);
-  // Always move at least one column so every bar asks for a move, but stay reachable.
-  const lo = Math.max(0, game.lastGapStart - maxGapShift);
-  const hi = Math.min(maxStart, game.lastGapStart + maxGapShift);
+  const last = game.lastGapStart;
+  if (last === null) return rand(maxStart + 1);
+  // Jump at least a full gap width so consecutive gaps never overlap, but cap the jump to stay reachable.
+  const maxShift = Math.max(maxGapShift, gapWidth);
   const options = [];
-  for (let c = lo; c <= hi; c++) if (c !== game.lastGapStart) options.push(c);
-  return options.length ? options[rand(options.length)] : game.lastGapStart;
+  for (let c = 0; c <= maxStart; c++) {
+    const shift = Math.abs(c - last);
+    if (shift >= gapWidth && shift <= maxShift) options.push(c);
+  }
+  if (options.length) return options[rand(options.length)];
+  // Gap too wide for a clean jump: go as far as the board allows.
+  return last * 2 < maxStart ? maxStart : 0;
 }
 
 // Advance one row. Returns { cleared } with the number of bars that left the board.

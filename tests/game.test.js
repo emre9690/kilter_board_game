@@ -50,16 +50,29 @@ test('bars spawn at the top, fall one row per tick and score at the bottom', () 
   assert.equal(game.score, 1);
 });
 
-test('gaps stay on the board and move by at most maxGapShift', () => {
-  const game = createGame({ gapWidth: 5, maxGapShift: 3, barSpacing: 1 }, seeded(42));
+test('each gap jumps at least a gap width and at most maxGapShift', () => {
+  const game = createGame({ gapWidth: 5, maxGapShift: 8, barSpacing: 1 }, seeded(42));
   let prev = null;
   for (let t = 0; t < 500; t++) {
     tick(game);
     const g = game.lastGapStart;
     assert.ok(g >= 0 && g + 5 <= COLS);
     if (prev !== null && game.ticksSinceSpawn === 0) {
-      assert.ok(Math.abs(g - prev) <= 3 && g !== prev);
+      const shift = Math.abs(g - prev);
+      assert.ok(shift >= 5 && shift <= 8, `jumped ${shift}`);
     }
+    prev = g;
+  }
+});
+
+test('wide gaps still jump at least a gap width when the board allows it', () => {
+  const game = createGame({ gapWidth: 7, maxGapShift: 3, barSpacing: 1 }, seeded(9));
+  let prev = null;
+  for (let t = 0; t < 300; t++) {
+    tick(game);
+    const g = game.lastGapStart;
+    assert.ok(g >= 0 && g + 7 <= COLS);
+    if (prev !== null && game.ticksSinceSpawn === 0) assert.ok(Math.abs(g - prev) >= 5, `jumped ${Math.abs(g - prev)}`);
     prev = g;
   }
 });
