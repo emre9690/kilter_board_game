@@ -2,7 +2,8 @@
 
 import { KilterConnection, isBluetoothSupported } from './ble.js';
 import { createGame, tick, renderFrame, DEFAULT_SETTINGS, DIFFICULTIES } from './game.js';
-import { createReach, advanceReach, renderReach, REACH_DIFFICULTIES } from './reach.js';
+import { createReach, advanceReach, renderReach, REACH_DEFAULTS, REACH_DIFFICULTIES } from './reach.js';
+import { CUSTOM_FIELDS, renderCustomPanel } from './custom.js';
 import { getBoard, BOARD_LIST, DEFAULT_BOARD_ID } from './layout.js';
 import { BIG, numberBitmap } from './font.js';
 import { createPreview } from './preview.js';
@@ -41,6 +42,7 @@ const REACH_STEP_SECONDS = 0.1;
 const GAMES = {
   drop: {
     label: 'Gap Drop',
+    defaults: DEFAULT_SETTINGS,
     presets: DIFFICULTIES,
     create: createGame,
     step(g) {
@@ -54,6 +56,7 @@ const GAMES = {
   },
   reach: {
     label: 'Reach',
+    defaults: REACH_DEFAULTS,
     presets: REACH_DIFFICULTIES,
     create: createReach,
     step(g) {
@@ -74,15 +77,26 @@ const UI_DEFAULTS = {
   sounds: true,
   showAllDevices: false,
   apiLevel: 'auto',
+  custom: {}, // { [gameType]: full settings edited in Custom mode }
 };
 const settings = { ...UI_DEFAULTS, ...load(STORE_KEY, {}) };
 if (!GAMES[settings.gameType]) settings.gameType = UI_DEFAULTS.gameType;
-if (!DIFFICULTIES[settings.difficulty]) settings.difficulty = UI_DEFAULTS.difficulty;
+if (!DIFFICULTIES[settings.difficulty] && settings.difficulty !== 'custom') settings.difficulty = UI_DEFAULTS.difficulty;
+settings.custom ??= {};
 let board = getBoard(settings.boardId);
 settings.boardId = board.id;
 let showOnPreview = createPreview($('preview'), board);
 const currentGame = () => GAMES[settings.gameType];
-const currentPreset = () => currentGame().presets[settings.difficulty].settings;
+// A preset's full settings, so Custom mode starts with every slider filled in.
+const presetValues = (gameType, mode) => ({
+  getReadySeconds: DEFAULT_SETTINGS.getReadySeconds,
+  ...GAMES[gameType].defaults,
+  ...GAMES[gameType].presets[mode].settings,
+});
+const currentPreset = () =>
+  settings.difficulty === 'custom'
+    ? (settings.custom[settings.gameType] ??= presetValues(settings.gameType, 'intermediate'))
+    : currentGame().presets[settings.difficulty].settings;
 const bests = load(BEST_KEY, {}) || {};
 const bestKey = () => (settings.gameType === 'drop' ? settings.difficulty : `${settings.gameType}.${settings.difficulty}`);
 const bestScore = () => Number(bests[bestKey()]) || 0;
@@ -167,7 +181,7 @@ async function startRun() {
   display(new Map());
 
   setPhase('getready');
-  for (let t = DEFAULT_SETTINGS.getReadySeconds; t > 0; t--) {
+  for (let t = currentPreset().getReadySeconds ?? DEFAULT_SETTINGS.getReadySeconds; t > 0; t--) {
     setMessage(`Get set · ${t}`);
     await sleep(1000);
     if (!alive()) return;
@@ -251,6 +265,7 @@ function setPhase(next) {
   for (const b of $('modes').children) b.disabled = running;
   $('game-type').disabled = running;
   $('board').disabled = running;
+  for (const el of $('custom').querySelectorAll('input, button')) el.disabled = running;
 }
 
 function updateScore() {
@@ -322,6 +337,32 @@ function renderModes() {
   for (const b of $('modes').children) b.setAttribute('aria-checked', String(b.dataset.mode === settings.difficulty));
   $('game-type').value = settings.gameType;
   for (const list of document.querySelectorAll('[data-rules]')) list.hidden = list.dataset.rules !== settings.gameType;
+  renderCustom();
+}
+
+// ---------- custom mode ----------
+
+function renderCustom() {
+  const custom = settings.difficulty === 'custom';
+  $('custom').hidden = !custom;
+  if (!custom) return;
+  const values = currentPreset();
+  renderCustomPanel($('custom-fields'), CUSTOM_FIELDS[settings.gameType], values, board, (key, value) => {
+    values[key] = value;
+    save(STORE_KEY, settings);
+    updateScore();
+  });
+}
+
+for (const [key, mode] of Object.entries(DIFFICULTIES)) {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.textContent = mode.label;
+  b.addEventListener('click', () => {
+    settings.custom[settings.gameType] = presetValues(settings.gameType, key);
+    pickerChanged();
+  });
+  $('custom-from').appendChild(b);
 }
 
 // After a finished run, switching game or mode goes back to a clean Ready screen.
@@ -362,20 +403,25 @@ $('game-type').addEventListener('change', () => {
   pickerChanged();
 });
 
-for (const [key, mode] of Object.entries(DIFFICULTIES)) {
+const MODES = { ...Object.fromEntries(Object.entries(DIFFICULTIES).map(([k, m]) => [k, m.label])), custom: 'Custom' };
+for (const [key, label] of Object.entries(MODES)) {
   const b = document.createElement('button');
   b.type = 'button';
   b.setAttribute('role', 'radio');
   b.dataset.mode = key;
-  b.textContent = mode.label;
+  b.textContent = label;
   b.addEventListener('click', () => {
+    // Entering Custom for the first time starts from the mode you were on.
+    if (key === 'custom' && !settings.custom[settings.gameType] && settings.difficulty !== 'custom') {
+      settings.custom[settings.gameType] = presetValues(settings.gameType, settings.difficulty);
+    }
     settings.difficulty = key;
     pickerChanged();
   });
   $('modes').appendChild(b);
 }
 
-// ---------- options ----------
+// ---------- settings ----------
 
 for (const input of $('settings').querySelectorAll('input, select')) {
   const key = input.name;

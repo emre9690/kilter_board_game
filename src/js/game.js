@@ -49,6 +49,7 @@ export function createGame(settings = DEFAULT_SETTINGS, random = Math.random, bo
   // Narrow boards: at most half the width is gap, and the left and right gaps never overlap.
   s.gapWidth = Math.max(2, Math.min(Math.floor(board.cols / 2), Math.round(s.gapWidth)));
   s.sideJitter = Math.min(s.sideJitter, Math.max(0, Math.floor((board.cols - 2 * s.gapWidth) / 2)));
+  s.minRowSeconds = Math.min(s.minRowSeconds, s.rowSeconds); // custom mode can set these in any order
   return {
     settings: s,
     board,
