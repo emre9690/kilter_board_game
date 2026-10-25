@@ -2,9 +2,16 @@
 
 Arcade games for the Kilter Board, played on the wall. Your phone talks to the board over Bluetooth and the LEDs become the game.
 
-<p align="center">
-  <img src="docs/demo.gif" alt="A climber on a Kilter Board reaching for a green cluster of lit holds that turns red and jumps across the wall" width="300">
-</p>
+<table align="center">
+  <tr>
+    <th>Gap Drop</th>
+    <th>Reach</th>
+  </tr>
+  <tr>
+    <td><img src="docs/gap-drop.gif" alt="Gap Drop: red bars with a gap fall down the board on screen and on the wall while the climber moves into each gap" width="300"></td>
+    <td><img src="docs/reach.gif" alt="Reach: a cluster of holds lights up green, turns yellow and red, and the climber reaches it before it jumps elsewhere" width="300"></td>
+  </tr>
+</table>
 
 ## Games
 
