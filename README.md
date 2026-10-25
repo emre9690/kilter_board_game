@@ -52,6 +52,10 @@ Web Bluetooth needs HTTPS, or `localhost`. To host it, import the repo into [Ver
 - `src/js/game.js` and `src/js/reach.js` hold the game rules as pure logic with no DOM or timers, and are tested in `tests/`.
 - `scripts/extract-boards.py` regenerates `src/js/boards-data.js` from the Kilter app database.
 
+## Usage stats
+
+The hosted site counts visits (Vercel Web Analytics) and anonymous game events such as board connected, game started and score range (GoatCounter). Neither uses cookies or collects personal data, and nothing is sent when running on `localhost`. Set `GOATCOUNTER_CODE` in `src/js/analytics.js` to send events to your own GoatCounter site.
+
 ## Credits
 
 The Bluetooth protocol notes and the board database come from [1-max-1/fake_kilter_board](https://github.com/1-max-1/fake_kilter_board).

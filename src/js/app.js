@@ -4,6 +4,7 @@ import { KilterConnection, isBluetoothSupported } from './ble.js';
 import { createGame, tick, renderFrame, DEFAULT_SETTINGS, DIFFICULTIES } from './game.js';
 import { createReach, advanceReach, renderReach, REACH_DEFAULTS, REACH_DIFFICULTIES } from './reach.js';
 import { CUSTOM_FIELDS, renderCustomPanel } from './custom.js';
+import { initAnalytics, track, scoreBucket } from './analytics.js';
 import { getBoard, BOARD_LIST, DEFAULT_BOARD_ID } from './layout.js';
 import { BIG, numberBitmap } from './font.js';
 import { createPreview } from './preview.js';
@@ -13,6 +14,7 @@ const GREEN = [0, 255, 0];
 const PURPLE = [160, 0, 255];
 
 const $ = (id) => document.getElementById(id);
+initAnalytics();
 
 // ---------- persistence (best effort; private mode may block storage) ----------
 
@@ -203,6 +205,7 @@ async function startRun() {
   if (!alive()) return;
 
   setPhase('playing');
+  track('run-start', [settings.gameType, settings.difficulty, `board-${board.id}`]);
   display(new Map());
   let shown = '';
   while (alive()) {
@@ -229,6 +232,7 @@ async function endRun() {
   setPhase('over');
   releaseWake();
   const score = game?.score ?? 0;
+  track('run-end', [settings.gameType, settings.difficulty, `score-${scoreBucket(score)}`]);
   if (score > bestScore()) {
     bests[bestKey()] = score;
     save(BEST_KEY, bests);
@@ -320,9 +324,17 @@ async function guarded(action) {
 }
 
 $('btn-connect').addEventListener('click', () =>
-  guarded(() => connection.connect({ showAllDevices: settings.showAllDevices })),
+  guarded(async () => {
+    await connection.connect({ showAllDevices: settings.showAllDevices });
+    track('board-connected', [`board-${board.id}`, `api-${connection.apiLevel}`]);
+  }),
 );
-$('btn-reconnect').addEventListener('click', () => guarded(() => connection.reconnect()));
+$('btn-reconnect').addEventListener('click', () =>
+  guarded(async () => {
+    await connection.reconnect();
+    track('board-connected', [`board-${board.id}`, `api-${connection.apiLevel}`]);
+  }),
+);
 $('btn-disconnect').addEventListener('click', () => guarded(() => connection.disconnect()));
 $('btn-clear').addEventListener('click', () => display(new Map()));
 
