@@ -31,12 +31,6 @@ export function gridPosition(col, row) {
   return byXY.get(`${colToX(col)},${rowToY(row)}`)?.position;
 }
 
-// Holes within dy (board units) of a grid row, e.g. dy = 4 picks up adjacent screw-on rows.
-export function holesNearRow(row, dy = 0) {
-  const y = rowToY(row);
-  return HOLES.filter((h) => Math.abs(h.y - y) <= dy);
-}
-
 // Light a bitmap (array of strings, '#' = on) onto the bolt-on grid, centred by default.
 export function bitmapPositions(bitmap, { col, row } = {}) {
   const height = bitmap.length;
