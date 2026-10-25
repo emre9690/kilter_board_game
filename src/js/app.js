@@ -123,7 +123,7 @@ async function startRun() {
 
   setPhase('getready');
   for (let t = DEFAULT_SETTINGS.getReadySeconds; t > 0; t--) {
-    setMessage(`Get on the wall… ${t}`);
+    setMessage(`Get set · ${t}`);
     await sleep(1000);
     if (!alive()) return;
   }
@@ -167,7 +167,7 @@ async function endRun() {
     save(BEST_KEY, bests);
   }
   updateScore();
-  setMessage(`Score: ${score}`);
+  setMessage('Out');
   beep(220, 500);
   // Blink the bars where they stopped, then show the score.
   for (let i = 0; i < 2 && game; i++) {
@@ -223,13 +223,13 @@ function renderStatus(status, detail = '') {
   $('status-dot').className = `dot ${status}`;
   $('status-text').textContent =
     status === 'connected'
-      ? `Connected to ${connection.device?.name || 'board'} (API v${connection.apiLevel})`
+      ? connection.device?.name || 'Board'
       : status === 'connecting'
-        ? 'Connecting…'
-        : 'Not connected';
+        ? 'Connecting'
+        : 'Offline';
   const showDetail = status === 'disconnected' || detail.startsWith('Send failed');
   $('status-detail').textContent = showDetail ? detail : '';
-  $('btn-connect').textContent = known ? 'Pick a different board' : 'Connect board';
+  $('btn-connect').textContent = known ? 'Switch' : 'Connect';
   $('btn-connect').classList.toggle('primary', !known);
   $('btn-reconnect').hidden = !known || status !== 'disconnected';
   $('btn-disconnect').hidden = status !== 'connected';
@@ -261,14 +261,8 @@ if (!isBluetoothSupported()) {
 
 // ---------- difficulty modes ----------
 
-function describeMode(key) {
-  const m = DIFFICULTIES[key].settings;
-  return `${m.gapWidth}-hold gap · ${m.rowSeconds.toFixed(1)} s per row · speeds up every ${m.speedUpEvery} bars`;
-}
-
 function renderModes() {
   for (const b of $('modes').children) b.setAttribute('aria-checked', String(b.dataset.mode === settings.difficulty));
-  $('mode-detail').textContent = describeMode(settings.difficulty);
 }
 
 for (const [key, mode] of Object.entries(DIFFICULTIES)) {
