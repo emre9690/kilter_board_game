@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0d0f14">
+  <title>Gap Drop</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' rx='3' fill='%230d0f14'/><rect x='1' y='4' width='5' height='2' fill='%235b8cff'/><rect x='11' y='4' width='4' height='2' fill='%235b8cff'/><rect x='1' y='10' width='9' height='2' fill='%23a000ff'/><rect x='14' y='10' width='1' height='2' fill='%23a000ff'/></svg>">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="top">
+    <h1>Gap Drop</h1>
+    <p class="tagline">Bars fall down the Kilter board. Climb into the gap.</p>
+  </header>
+
+  <main>
+    <section class="card" id="connection">
+      <div class="status-row">
+        <span class="dot" id="status-dot"></span>
+        <span id="status-text">Not connected</span>
+      </div>
+      <p class="detail" id="status-detail"></p>
+      <p class="warning" id="unsupported" hidden>
+        This browser can't use Bluetooth. Use Chrome on Android, Mac, Windows or ChromeOS.
+        On iPhone, open this page in the free <strong>Bluefy</strong> browser.
+        You can still play on the preview below.
+      </p>
+      <div class="buttons">
+        <button id="btn-connect" class="primary">Connect board</button>
+        <button id="btn-reconnect" hidden>Reconnect</button>
+        <button id="btn-disconnect" hidden>Disconnect</button>
+        <button id="btn-clear" hidden>Clear lights</button>
+      </div>
+      <p class="hint">Close the Kilter app first. The board only accepts one Bluetooth connection at a time.</p>
+    </section>
+
+    <section class="card game" id="game">
+      <div class="scoreboard">
+        <div><span class="label">Score</span><span class="value" id="score">0</span></div>
+        <div><span class="label">Speed</span><span class="value" id="speed">1</span></div>
+        <div><span class="label">Best</span><span class="value" id="best">0</span></div>
+      </div>
+      <div class="big-message" id="message">Ready</div>
+      <button id="btn-main" class="huge">Start</button>
+      <p class="hint">Space bar also starts the run and ends it.</p>
+    </section>
+
+    <section class="card board-card">
+      <div id="preview" class="preview"></div>
+    </section>
+
+    <details class="card" id="settings">
+      <summary>Settings</summary>
+      <div class="settings-grid">
+        <label>Gap width <output id="out-gapWidth"></output>
+          <input type="range" name="gapWidth" min="3" max="9" step="1">
+        </label>
+        <label>Start speed <output id="out-rowSeconds"></output>
+          <input type="range" name="rowSeconds" min="0.6" max="3" step="0.1">
+        </label>
+        <label>Rows between bars <output id="out-barSpacing"></output>
+          <input type="range" name="barSpacing" min="4" max="12" step="1">
+        </label>
+        <label>Gap moves up to <output id="out-maxGapShift"></output>
+          <input type="range" name="maxGapShift" min="1" max="8" step="1">
+        </label>
+        <label>Time to get on the wall <output id="out-getReadySeconds"></output>
+          <input type="range" name="getReadySeconds" min="0" max="15" step="1">
+        </label>
+        <label class="check"><input type="checkbox" name="speedUp"> Speed up as you score</label>
+        <label class="check"><input type="checkbox" name="thickBars"> Thick bars (also light screw-on holds)</label>
+        <label class="check"><input type="checkbox" name="sounds"> Beeps on countdown and points</label>
+        <label class="check"><input type="checkbox" name="showAllDevices"> Show all Bluetooth devices when connecting</label>
+        <label>Board protocol
+          <select name="apiLevel">
+            <option value="auto">Auto-detect</option>
+            <option value="3">API v3 (most boards)</option>
+            <option value="2">API v2 (older boards)</option>
+          </select>
+        </label>
+      </div>
+    </details>
+
+    <details class="card">
+      <summary>How to play</summary>
+      <ol class="rules">
+        <li>Connect the board, then press <strong>Start</strong> and put the phone down.</li>
+        <li>Get on the wall near the bottom while the timer runs. The board counts down <strong>3 – 2 – 1 – GO</strong>.</li>
+        <li>Bars fall from the top. <strong>Lit holds are lava.</strong> When a bar reaches you, every hand and foot has to be on a hold in the gap.</li>
+        <li>Each bar that reaches the bottom is a point. Bars get faster and change color as you go: blue, then purple, then red.</li>
+        <li>Honor system: if you touch a lit hold or come off the wall, press <strong>I'm out</strong>. Your score shows on the board.</li>
+      </ol>
+    </details>
+  </main>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
